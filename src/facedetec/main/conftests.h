@@ -2,7 +2,7 @@
 #ifndef conf_Base_Tests_H
 #define conf_Base_Tests_H
 
-
+#define JSON_ASSERT(x) /* value */
 #include "base/test.h"
 #include "base/logger.h"
 #include "base/filesystem.h"

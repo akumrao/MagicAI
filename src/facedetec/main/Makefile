@@ -1,0 +1,60 @@
+INSTALLPATH=/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0
+#export INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_472/mips-gcc472-glibc216-64bit"
+TOOLCHAIN=${INSTALLPATH}/bin
+CROSS_COMPILE=${TOOLCHAIN}/mips-linux-gnu-
+CC=${CROSS_COMPILE}gcc
+CXX=${CROSS_COMPILE}g++
+LD=${CROSS_COMPILE}ld
+AR=${CROSS_COMPILE}ar
+STRIP=${CROSS_COMPILE}strip
+NM=${CROSS_COMPILE}nm
+RANLIB=${CROSS_COMPILE}ranlib
+# CFLAGS="-static -O2  -march=mips32r2 -uClibc++  -std=c++11 -I${INSTALLPATH}/include -I${INSTALLPATH}/_install/include/"
+# export CPPFLAGS="-static -O2  -uClibc++ -std=c++11 -I${INSTALLPATH}/include -I${INSTALLPATH}/_install/include/ -I${INSTALLPATH}/_install/include/ncursesw/"
+# export LDFLAGS="-static -uClibc++ -L${INSTALLPATH}/lib -L${INSTALLPATH}/_install/lib/"
+
+
+
+
+TARGET=runAI # define the name of the executable
+
+SOURCES=$(wildcard *.cpp ../src/*.cpp ../../base/src/*.cpp  )
+
+CXXFLAGS   +=  -g -std=c++11
+
+CPPFLAGS   += -I../../facedetec/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
+
+LDFLAGS +=  -L../xailient-sdk/lib -L${INSTALLPATH}/mips-linux-gnu/lib -muclibc
+
+LDLIBS    += -lxailient-fi -lpthread
+
+SLIBS    += /workspace/libra_coredump/src/libuv/build/libuv_a.a
+
+
+# /workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0/mips-linux-gnu/libc/uclibc/usr/lib/libm.a 
+
+#-uClibc++ -std=c++11  -Wl,-Bstatic -lm -Wl,-Bdynamic -Wl,--dynamic-linker=/lib/ld-uClibc.so.0 
+
+
+################################################################################
+### DO NOT EDIT THE FOLLOWING LINES ############################################
+
+
+# define list of objects
+OBJSC=$(SOURCES:.cpp=.o)
+OBJS=$(OBJSC:.cpp=.o)
+
+# the target is obtained linking all .o files
+all: $(SOURCES) $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) $(SLIBS) -o $(TARGET)
+
+purge: clean
+	rm -f $(TARGET)
+
+clean:
+	rm -f  $(OBJS)
+
+################################################################################
+################################################################################

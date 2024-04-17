@@ -1,6 +1,4 @@
-
-
-INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0"
+INSTALLPATH=/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0
 #export INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_472/mips-gcc472-glibc216-64bit"
 TOOLCHAIN=${INSTALLPATH}/bin
 CROSS_COMPILE=${TOOLCHAIN}/mips-linux-gnu-
@@ -17,12 +15,8 @@ RANLIB=${CROSS_COMPILE}ranlib
 
 
 
-# CFLAGS   +=  -I../xailient-sdk/include/ 
 
-# LDFLAGS   += -L../xailient-sdk/lib/ -L/experiment/mediaserver/src/json/xailient-sdk/lib/
-
-
-################################################
+################################################################################
 ################################################################################
 
 
@@ -30,13 +24,16 @@ TARGET=runConfTest # define the name of the executable
 
 SOURCES=$(wildcard *.cpp  )
 
+CFLAGS  +=  -muclibc
+
 CXXFLAGS   +=  -g -std=c++11  
 
-CPPFLAGS   += -I../../json/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
+CPPFLAGS   += -I../../facedetec/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
 
-LDFLAGS +=  -L../xailient-sdk/lib/ -L/experiment/mediaserver/src/json/xailient-sdk/lib/ -L${INSTALLPATH}/mips-linux-gnu/lib -muclibc
+LDFLAGS +=  -L../xailient-sdk/lib -L${INSTALLPATH}/mips-linux-gnu/lib -muclibc
 
-LDLIBS    += -lxailient-fi
+LDLIBS    += -lxailient-fi -lpthread 
+
 
 
 # /workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0/mips-linux-gnu/libc/uclibc/usr/lib/libm.a 

@@ -3,16 +3,25 @@
 #include <string>
 
 #include <xailient-fi/sdk_json_interface.h>
-
 #include <iostream>
+
+
+#define JSON_ASSERT(x) /* value */
+
+#include <json/json.hpp>
+using json = nlohmann::json;
 
 
 
 int main(int argc, char** argv) {
 
+    json test = json::object();
 
+    // test["arv"] = 1;
 
-    std::cout << "Hello, world!" << std::endl;
+    std::string msg = "Hello, world!";
+
+    std::cout << msg << std::endl;
 
 
     {
