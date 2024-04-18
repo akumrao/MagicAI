@@ -3,7 +3,6 @@
 #ifndef base_JSON_Configuration_H
 #define base_JSON_Configuration_H
 
-#define JSON_ASSERT(x) /* value */
 #include "json/json.h"
 #include "base/util.h"
 #include <mutex>

@@ -4,9 +4,11 @@
 
 #include <xailient-fi/sdk_json_interface.h>
 #include <iostream>
+#include <pthread.h>                                                            
 
 
-#define JSON_ASSERT(x) /* value */
+//#define JSON_ASSERT(x) /* value */
+//#define assert(x)
 
 #include <json/json.hpp>
 using json = nlohmann::json;

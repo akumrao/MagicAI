@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.4)
 project(libuv LANGUAGES CXX)
 
+add_definitions(-DNDEBUG)
+
 include(CMakePackageConfigHelpers)
 include(CMakeDependentOption)
 include(GNUInstallDirs)

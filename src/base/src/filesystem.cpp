@@ -95,47 +95,51 @@ bool exists(const std::string& path)
 // trailing slash for directories or
 // stat fails to recognize validity.
 // TODO: Do we need transcode here?
-#ifdef base_WIN
-    struct _stat s;
-    return _stat(fs::normalize(path).c_str(), &s) != -1;
-#else
-    struct stat s;
-    return stat(fs::normalize(path).c_str(), &s) != -1;
-#endif
+// #ifdef base_WIN
+//     struct _stat s;
+//     return _stat(fs::normalize(path).c_str(), &s) != -1;
+// #else
+//     struct stat s;
+//     return stat(fs::normalize(path).c_str(), &s) != -1;
+// #endif
+
+    return false;
 }
 
 
 bool isdir(const std::string& path)
 {
 // TODO: Do we need transcode here?
-#ifdef base_WIN
-    struct _stat s;
-    _stat(fs::normalize(path).c_str(), &s);
-#else
-    struct stat s;
-    stat(fs::normalize(path).c_str(), &s);
-#endif
-    // S_IFDIR: directory file.
-    // S_IFCHR: character-oriented device file
-    // S_IFBLK: block-oriented device file
-    // S_IFREG: regular file
-    // S_IFLNK: symbolic link
-    // S_IFSOCK: socket
-    // S_IFIFO: FIFO or pipe
-    return (s.st_mode & S_IFDIR) != 0;
+// #ifdef base_WIN
+//     struct _stat s;
+//     _stat(fs::normalize(path).c_str(), &s);
+// #else
+//     struct stat s;
+//     stat(fs::normalize(path).c_str(), &s);
+// #endif
+//     // S_IFDIR: directory file.
+//     // S_IFCHR: character-oriented device file
+//     // S_IFBLK: block-oriented device file
+//     // S_IFREG: regular file
+//     // S_IFLNK: symbolic link
+//     // S_IFSOCK: socket
+//     // S_IFIFO: FIFO or pipe
+//     return (s.st_mode & S_IFDIR) != 0;
+
+    return false;
 }
 
 
 std::int64_t filesize(const std::string& path)
 {
-#ifdef base_WIN
-    struct _stat s;
-    if (_stat(path.c_str(), &s) == 0)
-#else
-    struct stat s;
-    if (stat(path.c_str(), &s) == 0)
-#endif
-        return s.st_size;
+// #ifdef base_WIN
+//     struct _stat s;
+//     if (_stat(path.c_str(), &s) == 0)
+// #else
+//     struct stat s;
+//     if (stat(path.c_str(), &s) == 0)
+// #endif
+//         return s.st_size;
     return -1;
 }
 

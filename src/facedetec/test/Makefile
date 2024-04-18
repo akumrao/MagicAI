@@ -24,9 +24,9 @@ TARGET=runConfTest # define the name of the executable
 
 SOURCES=$(wildcard *.cpp  )
 
-CFLAGS  +=  -muclibc
+#CFLAGS  +=  -muclibc
 
-CXXFLAGS   +=  -g -std=c++11  
+CXXFLAGS   +=  -O3 -std=c++11  -DNDEBUG
 
 CPPFLAGS   += -I../../facedetec/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
 

@@ -88,8 +88,8 @@ void sleep(int ms)
 
 void pause()
 {
-    std::puts("Press enter to continue...");
-    std::getchar();
+   // std::puts("Press enter to continue...");
+   // std::getchar();
 }
 
 
