@@ -1,44 +1,24 @@
-INSTALLPATH=/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0
-#export INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_472/mips-gcc472-glibc216-64bit"
-TOOLCHAIN=${INSTALLPATH}/bin
-CROSS_COMPILE=${TOOLCHAIN}/mips-linux-gnu-
-CC=${CROSS_COMPILE}gcc
-CXX=${CROSS_COMPILE}g++
-LD=${CROSS_COMPILE}ld
-AR=${CROSS_COMPILE}ar
-STRIP=${CROSS_COMPILE}strip
-NM=${CROSS_COMPILE}nm
-RANLIB=${CROSS_COMPILE}ranlib
-# CFLAGS="-static -O2  -march=mips32r2 -uClibc++  -std=c++11 -I${INSTALLPATH}/include -I${INSTALLPATH}/_install/include/"
-# export CPPFLAGS="-static -O2  -uClibc++ -std=c++11 -I${INSTALLPATH}/include -I${INSTALLPATH}/_install/include/ -I${INSTALLPATH}/_install/include/ncursesw/"
-# export LDFLAGS="-static -uClibc++ -L${INSTALLPATH}/lib -L${INSTALLPATH}/_install/lib/"
-
-
-
-
 ################################################################################
-################################################################################
+### CUSTOMIZE BELOW HERE #######################################################
 
+CC	= gcc
+CXX     = g++
+TARGET=runTest # define the name of the executable
+SOURCES=$(wildcard *.cpp ../src/*.cpp ../../libuv/src/*.cpp ../../libuv/src/unix/*.cpp ../../base/src/*.cpp ../../base/token/*.cpp  ../../net/src/*.cpp ../../http/src/*.cpp ../../net/uv_multiplex/src/*.cpp ../../http_parser/*.cpp    )
 
-TARGET=runConfTest # define the name of the executable
+CXXFLAGS   := -g  -std=c++14 -Wno-inconsistent-missing-override -Wno-uninitialized
+ 
 
-SOURCES=$(wildcard *.cpp  )
-
-#CFLAGS  +=  -muclibc
-
-CXXFLAGS   +=  -O3 -std=c++11  -DNDEBUG
-
-CPPFLAGS   += -I../../facedetec/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
-
-LDFLAGS +=  -L../xailient-sdk/lib -L${INSTALLPATH}/mips-linux-gnu/lib -muclibc
-
-LDLIBS    += -lxailient-fi -lpthread 
+CPPFLAGS   := -I../../facedetec/include/  -I../../base/token/  -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../net/uv_multiplex/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser/ \
+-I../xailient-sdk/include/  -DHTTPSSL=1
+              
+LDFLAGS   := -L/data/sound/lib -L/usr/lib/x86_64-linux-gnu
 
 
 
-# /workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0/mips-linux-gnu/libc/uclibc/usr/lib/libm.a 
+LDLIBS    := -lpthread -lm -ldl  -lssl -lcrypto  
 
-#-uClibc++ -std=c++11  -Wl,-Bstatic -lm -Wl,-Bdynamic -Wl,--dynamic-linker=/lib/ld-uClibc.so.0 
+#SLIBS     := /data/mozilla/webrtc-builds/out/webrtc-22215-d8831bb-linux-x64/lib/x64/Debug/libwebrtc_full.a
 
 
 ################################################################################
@@ -61,4 +41,5 @@ purge: clean
 clean:
 	rm -f  $(OBJS)
 
-##########################
+################################################################################
+################################################################################

@@ -15,19 +15,25 @@ RANLIB=${CROSS_COMPILE}ranlib
 
 
 
-TARGET=runAI # define the name of the executable ./../net/src/*.cpp ../../http/src/*.cpp ../../net/uv_multiplex/src/*.cpp ../../http_parser/*.cpp  
 
-SOURCES=$(wildcard *.cpp ../src/*.cpp ../../base/src/*.cpp ../../base/token/*.cpp ./../net/src/*.cpp ../../http/src/*.cpp ../../net/uv_multiplex/src/*.cpp ../../http_parser/*.cpp    )
-#../../libuv/src/*.cpp ../../libuv/src/unix/*.cpp
+################################################################################
+################################################################################
+
+
+TARGET=runConfTest # define the name of the executable
+
+SOURCES=$(wildcard *.cpp  )
+
+#CFLAGS  +=  -muclibc
+
 CXXFLAGS   +=  -O3 -std=c++11  -DNDEBUG
 
 CPPFLAGS   += -I../../facedetec/include/ -I../../http/include/ -I../../base/include/ -I../../net/include/ -I../../libuv/include -I../../libuv/src -I../../../build/ -I../../http_parser -I../xailient-sdk/include/ 
 
-LDFLAGS +=  -L../xailient-sdk/lib -L${INSTALLPATH}/mips-linux-gnu/lib -L/workspace/libra_coredump/src/libuv/build -muclibc
+LDFLAGS +=  -L../xailient-sdk/lib -L${INSTALLPATH}/mips-linux-gnu/lib -muclibc
 
-LDLIBS    += -lxailient-fi -lpthread
+LDLIBS    += -lxailient-fi -lpthread 
 
-SLIBS    += ../../libuv/build/libuv_a.a
 
 
 # /workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0/mips-linux-gnu/libc/uclibc/usr/lib/libm.a 
@@ -47,7 +53,7 @@ OBJS=$(OBJSC:.cpp=.o)
 all: $(SOURCES) $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(SLIBS) $(LDLIBS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) $(SLIBS) -o $(TARGET)
 
 purge: clean
 	rm -f $(TARGET)
@@ -55,5 +61,4 @@ purge: clean
 clean:
 	rm -f  $(OBJS)
 
-################################################################################
-################################################################################
+##########################
