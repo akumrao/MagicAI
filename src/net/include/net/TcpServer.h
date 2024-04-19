@@ -17,10 +17,37 @@
 #include <string>
 #include <unordered_set>
 
+#include <mutex>
+
 namespace base
 {
     namespace net
     {
+        
+        struct child_worker {
+            //uv_process_t req;
+          ////  uv_process_options_t options;
+          
+            uv_connect_t connect_req;
+
+            uv_pipe_t pipe;
+            uv_thread_t thread;
+
+            uv_loop_t *loppworker{nullptr};
+           
+            
+            uv_pipe_t queue;
+            uv_pipe_t channelqueue;
+
+            //uv_os_sock_t fds[2];
+
+            uv_file fds[2];
+            
+            TcpServerBase *obj{nullptr};
+
+            int id;
+
+        } ;//*workers;
 
         class TcpServerBase : public Listener, public TcpConnectionBase::ListenerClose
         {
@@ -28,7 +55,7 @@ namespace base
             /**
              * uvHandle must be an already initialized and binded uv_tcp_t pointer.
              */
-            TcpServerBase(uv_tcp_t* uvHandle, int backlog);
+            TcpServerBase(uv_tcp_t* uvHandle, int backlog, bool multiThreaded=false);
             virtual ~TcpServerBase() ;
 
         public:
@@ -40,6 +67,10 @@ namespace base
             uint16_t GetLocalPort() const;
             size_t GetNumConnections() const;
 	    std::unordered_set<TcpConnectionBase*>& GetConnections();	
+            
+            
+            void setup_workers();
+             
 
             bool setNoDelay(bool enable)
             {
@@ -67,6 +98,8 @@ namespace base
 
         private:
             bool SetLocalAddress();
+            
+            child_worker *workers{nullptr};
 
             /* Pure virtual methods that must be implemented by the subclass. */
         public:
@@ -76,11 +109,12 @@ namespace base
 
             /* Callbacks fired by UV events. */
         public:
-            void OnUvConnection(int status);
+            void OnUvConnection(uv_stream_t* uvh, int status);
 
             /* Methods inherited from TcpConnectionBase::Listener. */
         public:
             void OnTcpConnectionClosed(TcpConnectionBase* connection) ;
+            void worker_connection( uv_loop_t *loppworker, uv_stream_t *q);
 
         protected:
                uv_tcp_t* BindTcp(std::string &ip, int port);
@@ -95,6 +129,15 @@ namespace base
             // Others.
             std::unordered_set<TcpConnectionBase*> connections;
             bool closed{ false};
+            
+            bool multithreaded{false};
+            
+            int round_robin_counter{0};
+            int child_worker_count{0};
+            
+            
+            std::mutex con_mutex;
+            
         };
 
         /* Inline methods. */
@@ -130,7 +173,7 @@ namespace base
 
      
         public:
-            TcpServer(Listener* listener, std::string ip, int port, bool ssl=false);
+            TcpServer(Listener* listener, std::string ip, int port, bool multiThreaded=false, bool ssl=false );
 
             ~TcpServer() override;
 

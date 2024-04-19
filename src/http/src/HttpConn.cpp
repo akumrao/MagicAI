@@ -43,13 +43,13 @@ namespace base {
             
             if(wsAdapter)
             {    
-                 SInfo <<  "wsAdapter delete connection " << wsAdapter; 
+                SDebug <<  "wsAdapter delete connection " << wsAdapter; 
                 delete wsAdapter;
                 wsAdapter = nullptr;
                  
             }
             
-            SInfo << "~HttpConnection()";
+            SDebug << "~HttpConnection()";
           
         }
 
@@ -57,7 +57,7 @@ namespace base {
 
            LTrace("on_read()")
                     
-          // SInfo << "on_read:TCP server send data: " << std::string((char*)data, len) << "len: " << len << std::endl << std::flush;
+          // SDebug << "on_read:TCP server send data: " << std::string((char*)data, len) << "len: " << len << std::endl << std::flush;
                     
             if(wsAdapter)
             {
@@ -65,7 +65,13 @@ namespace base {
                 return;
             }
             
-             _parser.parse((const char*) data, len);
+           try {
+              _parser.parse((const char*)data, len);
+            }
+           catch(...) {
+           
+               SInfo << "Excetion at parser ";
+           }
              
           //  if(!wsAdapter)
            // this->listener->on_read(this, data, len);
@@ -73,7 +79,7 @@ namespace base {
         
           void HttpConnection::on_close() {
 
-            SInfo << "HttpConnection::on_close()";
+            SDebug << "HttpConnection::on_close()";
                     
             if (_responder) {
                 _responder->onClose();
@@ -112,9 +118,9 @@ namespace base {
         }
           
         
-        void HttpConnection::tcpsend(const char* data, size_t len)
+        void HttpConnection::tcpsend(const char* data, size_t len, onSendCallback cb)
         {
-              Write(data, len,nullptr);
+              Write(data, len, cb);
         }
         
         void HttpConnection::send(const char* data, size_t len, bool binary) {
@@ -123,7 +129,7 @@ namespace base {
             
              if (shouldSendHeader())
             {
-                long res = sendHeader();
+                sendHeader();
 
                 // The initial packet may be empty to push the headers through
                 if (len == 0)
@@ -161,7 +167,7 @@ namespace base {
                           if(wsAdapter)
                                delete wsAdapter;
                           wsAdapter = new WebSocketConnection( listener, this, ServerSide);
-                          SInfo <<  "wsAdapter new connection " << wsAdapter;  
+                          SDebug <<  "wsAdapter new connection " << wsAdapter;  
                           
                         //   replaceAdapter(wsAdapter);
 
@@ -201,6 +207,9 @@ namespace base {
         void HttpConnection::on_payload(const char* data, size_t len){
 
            this->listener->on_read(this, data,len );
+           
+            if (_responder)
+                _responder->onPayload( std::string( data,len ), _request);
         }
 
         void HttpConnection::onComplete() {

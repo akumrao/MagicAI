@@ -47,13 +47,15 @@ namespace base {
                                           "-----END CERTIFICATE-----";
 
 
-        static SSL_CTX *ctx = nullptr;
+        static SSL_CTX *ctxClient = nullptr;
+        
+        static SSL_CTX *ctxServer = nullptr;
 
         SSL_CTX* InitCTX(bool server) {
             const SSL_METHOD *method;
             SSL_CTX *ctx;
 
-            char CertFile[] = "/var/tmp/key/certificate.crt";
+
             char KeyFile[] = "/var/tmp/key/private_key.pem";
 
             SSL_library_init();
@@ -81,6 +83,9 @@ namespace base {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             #if FROMFILE
+
+            char CertFile[] = "/var/tmp/key/certificate.crt";
+           
             if (SSL_CTX_load_verify_locations(ctx, CertFile, nullptr) != 1)
                     ERR_print_errors_fp(stderr);
 
@@ -235,12 +240,12 @@ namespace base {
                     assert(!_socket->context()->isForServerUse());
                      */
 
-            if (!ctx) {
-                ctx = InitCTX(false); /* initialize SSL */
+            if (!ctxClient) {
+                ctxClient = InitCTX(false); /* initialize SSL */
             }
 
 
-            _ssl = SSL_new(ctx);
+            _ssl = SSL_new(ctxClient);
 
             // TODO: Improve automatic SSL session handling.
             // Maybe add a stored session to the network manager.
@@ -262,13 +267,13 @@ namespace base {
                         _socket->useContext(SSLManager::instance().defaultServerContext());
                     assert(_socket->context()->isForServerUse());*/
 
-            if (!ctx) {
-                ctx = InitCTX(true); /* initialize SSL */
+            if (!ctxServer) {
+                ctxServer = InitCTX(true); /* initialize SSL */
 
             }
 
 
-            _ssl = SSL_new(ctx);
+            _ssl = SSL_new(ctxServer);
             _readBIO = BIO_new(BIO_s_mem());
             _writeBIO = BIO_new(BIO_s_mem());
             SSL_set_bio(_ssl, _readBIO, _writeBIO);
@@ -398,7 +403,8 @@ namespace base {
                 char buffer[npending];
                 int nread = BIO_read(_writeBIO, buffer, npending);
                 if (nread > 0) {
-                    _socket->Write(buffer, nread,nullptr); // arvind
+                    _socket->Write(buffer, nread,cb); // arvind
+                    cb = nullptr;
                 }
             }
         }

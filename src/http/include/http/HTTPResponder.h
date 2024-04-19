@@ -36,25 +36,29 @@ namespace base {
                 LDebug("On close")
 
             }
+            
+            void sendResponse(std::string &result, bool success);
+            
 
             void onRequest(net::Request& request, net::Response& response) ;
+            
+            bool authcheck(net::Request& request, std::string &ret, bool tokenOnly =true);
+            
         };
 
+        class render_baton;
         class HttpResponder : public ServerResponder
         /// Basic server responder (make echo?)
         {
         public:
 
-            HttpResponder(net::HttpBase* conn) :
-            ServerResponder(conn) {
-                STrace << "BasicResponder" << std::endl;
-            }
+            HttpResponder(net::HttpBase* conn) ;
+            
+            ~HttpResponder();
 
-            virtual void onClose() {
-                ;
-                LDebug("On close")
-
-            }
+            virtual void onClose(); 
+            
+            render_baton *closure {nullptr};
 
             void onRequest(net::Request& request, net::Response& response);
         };
@@ -69,7 +73,15 @@ namespace base {
                 // Log incoming requests
                 STrace << "Incoming connection from " << ": Request:\n" << request << std::endl;
 
-                SInfo << "Incoming connection from: " << request.getHost() << " method: " << request.getMethod() << " uri: <<  " << request.getURI() << std::endl;
+                if( !request.has("Host"))
+                {
+
+                    SError << "Incoming connection does not have host "  << request.getMethod() << " uri: <<  " << request.getURI() << std::endl;
+
+                    return new BasicResponder(conn);
+                }
+
+                SDebug << "Incoming connection from: " << request.getHost() << " method: " << request.getMethod() << " uri: <<  " << request.getURI() << std::endl;
 
                 // Handle websocket connections
                 if (request.getMethod() == "GET") { // || request.has("Sec-WebSocket-Key")) {

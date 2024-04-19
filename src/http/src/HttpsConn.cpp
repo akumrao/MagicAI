@@ -53,9 +53,9 @@ namespace base {
 
         void HttpsConnection::on_read(const char* data, size_t len) {
 
-            LTrace("on_read()" )
+          // LTrace("on_read()" )
                     
-             LTrace( data )
+          //  LTrace( data )
                     
             if(wsAdapter)
             {
@@ -110,9 +110,9 @@ namespace base {
         }
         
         
-        void  HttpsConnection::tcpsend(const char* data, size_t len)
+        void  HttpsConnection::tcpsend(const char* data, size_t len, onSendCallback cb)
         {
-              SslConnection::send(data, len);
+               SslConnection::tcpsend(data, len, cb); // arvind
         }
         
         void HttpsConnection::send(const char* data, size_t len, bool binary) {
@@ -198,6 +198,9 @@ namespace base {
 
 
         void HttpsConnection::on_payload(const char* data, size_t len){
+            
+            if (_responder)
+                _responder->onPayload( std::string( data,len ), _request);
 
         }
 

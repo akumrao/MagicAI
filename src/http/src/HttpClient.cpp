@@ -92,17 +92,17 @@ namespace base {
             if (_url.scheme() == "ws") {
                 //  conn->replaceAdapter(new ws::ConnectionAdapter(conn.get(), ws::ClientSide));
                 wsAdapter = new WebSocketConnection(listener, this, ClientSide);
-                SInfo <<  "wsAdapter new connection " << wsAdapter;  
+                SDebug <<  "wsAdapter new connection " << wsAdapter;  
             }
         }
          
         HttpClient::~HttpClient() {
 
-            SInfo <<  "wsAdapter delete connection " << wsAdapter;  
+            SDebug <<  "wsAdapter delete connection " << wsAdapter;  
             delete wsAdapter;
             wsAdapter = nullptr;
             
-            SInfo << "~HttpClient ";
+            SDebug << "~HttpClient ";
         }
 
         void HttpClient::send() {
@@ -121,9 +121,9 @@ namespace base {
             TcpConnectionBase::Close();
         }
 
-         void HttpClient::tcpsend(const char* data, size_t len) {
+         void HttpClient::tcpsend(const char* data, size_t len, onSendCallback cb) {
     
-             TcpConnectionBase::send(data, len);
+             TcpConnectionBase::Write(data, len ,cb);
          }
          
         void HttpClient::send(const char* data, size_t len , bool binary) {
@@ -131,7 +131,7 @@ namespace base {
             
             if(wsAdapter)
             {
-                wsAdapter->send(data,len, binary );
+                wsAdapter->send(data,len, binary, nullptr );
                 return;
             }
 
@@ -292,11 +292,13 @@ namespace base {
 
             // Release any file handles
             if (_readStream) {
-                std::ofstream* fstream = (std::ofstream*) (_readStream.get());
-                if (fstream) {
+             //   std::ofstream* fstream = (std::ofstream*) (_readStream.get());
+             //   if (fstream) {
                     // LTrace("Closing file stream")
-                    fstream->close();
-                }
+               //     fstream->close();
+                //}
+                _readStream.release();
+
             }
             _complete = true; // in case close() is called inside callback
 

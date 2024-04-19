@@ -34,6 +34,7 @@ namespace base {
         inline static void onRead(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
             auto* connection = static_cast<TcpConnectionBase*> (handle->data);
 
+           // SDebug << "onRead "  << connection;
             if (connection)
             	connection->OnUvRead(nread, buf);
         }
@@ -56,7 +57,7 @@ namespace base {
             
             TcpConnectionBase *obj = (TcpConnectionBase *) handle->data;
             
-            SInfo << "onClose ";
+            SDebug << "onClose ";
             
            
             if (obj)
@@ -87,15 +88,23 @@ namespace base {
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 
-        TcpConnectionBase::TcpConnectionBase(bool tls) : tls(tls) {
+        TcpConnectionBase::TcpConnectionBase(Listener *listener, bool tls) : tls(tls), listener(listener){
 
             this->uvHandle = new uv_tcp_t;
             this->uvHandle->data = (void*) this;
            
-            SInfo << "TcpConnectionBase new handle " <<  this->uvHandle;
+            SDebug << "TcpConnectionBase new handle " <<  this->uvHandle;
              
             // NOTE: Don't allocate the buffer here. Instead wait for the first uv_alloc_cb().
         }
+        
+       int TcpConnectionBase::write_queue_size()
+       {
+           if( uvHandle != nullptr) 
+           return this->uvHandle->write_queue_size;
+           
+           return 0;
+       }
 
         TcpConnectionBase::~TcpConnectionBase() {
 
@@ -105,7 +114,7 @@ namespace base {
 
             delete[] this->buffer;
             
-            SInfo << "~TcpConnectionBase delete handle " <<  this->uvHandle;
+            SDebug << "~TcpConnectionBase delete handle " <<  this->uvHandle;
             delete   this->uvHandle;
             this->uvHandle = nullptr;        
             
@@ -174,12 +183,12 @@ namespace base {
             LDebug("</TcpConnectionBase>");
         }
 
-        void TcpConnectionBase::Setup( ListenerClose* listenerClose,
+        void TcpConnectionBase::Setup( ListenerClose* listenerClose, uv_loop_t* _loop,
                 struct sockaddr_storage* localAddr, const std::string& localIp, uint16_t localPort) {
             this->listenerClose = listenerClose;
 
             // Set the UV handle.
-            int err = uv_tcp_init(Application::uvGetLoop(), this->uvHandle);
+            int err = uv_tcp_init(_loop, this->uvHandle);
 
             if (err != 0) {
                 delete this->uvHandle;
@@ -304,7 +313,7 @@ namespace base {
                 LError("error setting peer IP and port");
         }
 
-        int TcpConnectionBase::Write(const char* data, size_t len, TcpConnectionBase::onSendCallback cb) {
+        int TcpConnectionBase::Write(const char* data, size_t len, onSendCallback cb) {
 
             if (this->closed)
             {
@@ -392,7 +401,7 @@ namespace base {
             return pendingLen;
         }
 
-        int TcpConnectionBase::Write(const char* data1, size_t len1, const char* data2, size_t len2, TcpConnection::onSendCallback cb) {
+        int TcpConnectionBase::Write(const char* data1, size_t len1, const char* data2, size_t len2, onSendCallback cb) {
 
             if (this->closed)
             {
@@ -570,6 +579,9 @@ namespace base {
                     on_tls_read((const char*) buf->base, nread);
                 else
                     on_read((const char*) buf->base, nread);
+                
+                if(listener)
+                listener->on_read(this, (const char*) buf->base, nread); //arvind
 
             }// Client disconneted.
             else if (nread == UV_EOF || nread == UV_ECONNRESET) {
@@ -622,7 +634,7 @@ namespace base {
 	    static uint8_t ReadBuffer[ReadBufferSize];
 
         TcpConnection::TcpConnection(Listener* listener, bool tls)
-        : TcpConnectionBase(tls), listener(listener) {
+        : TcpConnectionBase(listener, tls){
 
         }
 

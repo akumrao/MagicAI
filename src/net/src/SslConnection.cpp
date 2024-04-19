@@ -22,7 +22,7 @@ namespace net {
 
 
 SslConnection::SslConnection()
-    : TcpConnectionBase( true)
+    : TcpConnectionBase(nullptr, true)
 //    , _sslContext(nullptr)
 //    , _sslSession(nullptr)
     , _sslAdapter(this)
@@ -35,7 +35,7 @@ SslConnection::SslConnection()
 
 
 SslConnection::SslConnection( bool server)
-    : TcpConnectionBase( true)
+    : TcpConnectionBase(nullptr, true)
   //  , _sslSession(nullptr)
     , _sslAdapter(this)
     ,serverMode(server)
@@ -202,6 +202,15 @@ void SslConnection::send(const char* data, size_t len)
     return ;
 }
 
+
+void SslConnection::tcpsend(const char* data, size_t len, onSendCallback _cb)
+{
+     assert(_sslAdapter._ssl);
+    _sslAdapter.cb = _cb;
+    _sslAdapter.addOutgoingData(data, len);
+    _sslAdapter.flush();
+    return ;
+}
 //
 // Callbacks
 

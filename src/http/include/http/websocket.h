@@ -20,7 +20,12 @@
 #include "http/request.h"
 #include "http/response.h"
 #include "base/random.h"
-//#include "http/HttpConn.h"
+#include "base/Timer.h"
+
+#include  <mutex>
+#include  <queue>
+
+
 
 
 
@@ -136,7 +141,7 @@ namespace base {
         /// This class implements a WebSocket parser according
         /// to the WebSocket protocol described in RFC 6455.
 
-        class HTTP_API WebSocketFramer {
+        class  WebSocketFramer {
         public:
             /// Creates a Socket using the given Socket.
             WebSocketFramer(Mode mode);
@@ -227,13 +232,17 @@ namespace base {
 
             std::string storeBuf;
 
-            void send(const char* data, size_t len, bool binary =false);
+            void send(const char* data, size_t len, bool binary =false, onSendCallback cb=nullptr);
             
 
            // void send(const char* data, size_t len, int flags) ; // flags = Text || Binary
 
             bool shutdown(uint16_t statusCode, const std::string& statusMessage);
             bool pong();
+            
+            void dummy_timer_cb();
+            
+            void push( const char* data, size_t len, bool binary, int frametype);
             //
             /// Client side
 
@@ -267,6 +276,24 @@ namespace base {
 
             Request& _request;
             Response& _response;
+            
+            Timer dummy_timer{ nullptr};
+            std::mutex dummy_mutex;
+            
+            struct Store{
+                
+                bool binary;
+                std::string buff;  
+                int frametype;   // 1 ftype, 2 moov , 3 first moof( idr frame), 4 P or B frames cane be dropped 
+            };
+            std::queue< Store> dummy_queue;
+            
+            bool dropping{false};
+            int first_frame{1};
+            int qsize{ 0 };
+            
+        public:
+            std::string key;
         };
 
 

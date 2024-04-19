@@ -19,6 +19,7 @@
 
 namespace base
 {
+     using onSendCallback =  std::function<void(bool sent)>;
     namespace net
     {
 
@@ -29,7 +30,7 @@ namespace base
         class TcpConnectionBase: public Listener
         {
         protected:
-        using onSendCallback =  std::function<void(bool sent)>;
+       
 
         
         public:
@@ -61,7 +62,7 @@ namespace base
 
                 uv_write_t req;
                 uint8_t* store{ nullptr };
-                TcpConnectionBase::onSendCallback cb{ nullptr };
+                onSendCallback cb{ nullptr };
             };
 
 
@@ -69,7 +70,7 @@ namespace base
             friend class TcpServerBase;
 
         public:
-            explicit TcpConnectionBase(bool tls = false);
+            explicit TcpConnectionBase(Listener *lis = nullptr, bool tls = false);
             TcpConnectionBase& operator=(const TcpConnectionBase&) = delete;
             TcpConnectionBase(const TcpConnectionBase&) = delete;
             virtual ~TcpConnectionBase();
@@ -83,15 +84,15 @@ namespace base
             virtual void on_close();
             virtual void Dump() const;
             void Setup(
-                    ListenerClose* listenerClose,
+                    ListenerClose* listenerClose, uv_loop_t* _loop,
                     struct sockaddr_storage* localAddr,
                     const std::string& localIp,
                     uint16_t localPort);
             bool IsClosed() const;
             uv_tcp_t* GetUvHandle() const;
             void Start();
-            int Write(const char* data, size_t len,TcpConnectionBase::onSendCallback cb);
-            int Write(const char* data1, size_t len1, const char* data2, size_t len2,TcpConnectionBase::onSendCallback cb);
+            int Write(const char* data, size_t len,onSendCallback cb);
+            int Write(const char* data1, size_t len1, const char* data2, size_t len2,onSendCallback cb);
             int Write(const std::string& data);
             void ErrorReceiving();
             const struct sockaddr* GetLocalAddress() const;
@@ -112,6 +113,8 @@ namespace base
             void OnUvWrite(int status,onSendCallback cb);
 
             void send(const char* data, size_t len) override ;
+            
+            int write_queue_size();
 
         protected:
             // Passed by argument.
@@ -150,6 +153,9 @@ namespace base
             bool hasError{ false};
             
             bool tls;
+            
+            protected:
+            Listener* listener{ nullptr};
             
         };
 
@@ -223,7 +229,7 @@ namespace base
 
         public:
             // Passed by argument.
-            Listener* listener{ nullptr};
+          
             // Others.
         public:
             size_t frameStart{ 0}; // Where the latest frame starts.
