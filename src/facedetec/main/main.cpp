@@ -4,11 +4,21 @@
 #include "base/filesystem.h"
 #include "base/platform.h"
 
-#include <json/json.hpp>
 
-using json = nlohmann::json;
 
-#include "json/configuration.h"
+#include "net/netInterface.h"
+#include "http/client.h"
+#include "base/logger.h"
+#include "base/application.h"
+#include "base/platform.h"
+
+#include "http/url.h"
+#include "base/filesystem.h"
+#include "http/HttpClient.h"
+#include "http/HttpsClient.h"
+#include "http/HTTPResponder.h"
+
+
 //#include "json/json.hpp"
 #include <fstream>   // std::ifstream
 #include <iostream>  // std::cout
@@ -16,17 +26,48 @@ using json = nlohmann::json;
 #include <chrono>
 #include <thread>
 
+
+#include "t31Video.h"
+
 using std::cerr;
 using std::cout;
 using std::endl;
 
-// using namespace nlohmann;
 using namespace base;
-using namespace base::cnfg;
+using namespace base::net;
 
-#include <xailient-fi/sdk_json_interface.h>
+void RestAPI(std::string method, std::string uri)
+{
+    
+    ClientConnecton *conn = new HttpsClient( "https", "ipcamera.adapptonline.com", 8080, uri);
+    //Client *conn = new Client("http://zlib.net/index.html");
+    conn->fnComplete = [&](const Response & response) {
+        std::string reason = response.getReason();
+        StatusCode statuscode = response.getStatus();
+     //   std::string body = conn->readStream() ? conn->readStream()->str() : "";
+      //  STrace << "Post API reponse" << "Reason: " << reason << " Response: " << body;
+    };
 
-int start_video_t31();
+    conn->fnConnect = [&](HttpBase * con) {
+
+        std::cout << "fnConnect:";
+    };
+
+    conn->fnPayload = [&](HttpBase * con, const char* data, size_t sz) {
+
+        std::cout << "client->fnPayload " << data << std::endl << std::flush;
+    };
+
+    conn->fnUpdateProgess = [&](const std::string str) {
+        std::cout << "final test " << str << std::endl << std::flush;
+    };
+
+    conn->_request.setMethod(method);
+    conn->_request.setKeepAlive(false);
+    conn->setReadStream(new std::stringstream);
+    conn->send();
+    
+}
 
 int main(int argc, char** argv) {
     // Logger::instance().add(new RotatingFileChannel("test", "/tmp/test",
@@ -36,94 +77,70 @@ int main(int argc, char** argv) {
 
     // =========================================================================
 
+    Application app;
+
+    T31Video t31Video;
+
+    if( !t31Video.XAInit())
+      if(! t31Video.T31Init())
+      {
+        t31Video.start();
+      }
 
 
-    start_video_t31();
-
-    // cnfg::Configuration config;
-
-    // config.load("./config.json");
-
-    // std::string xaconfig = config.root.dump();
-
-    // xa_fi_error_t returnValue;
-
-    // const char* path_to_vision_cell =
-    //     "/mnt/libxailient-fi-vcell.so";                    // For shared lib
-    // returnValue = xa_sdk_initialize(path_to_vision_cell);  // For shared lib
-
-    // // returnValue = xa_sdk_initialize(); // For static lib
-
-    // if (returnValue != XA_ERR_NONE) {
-    //     SError << "Error at xa_sdk_initialize";
-
-    //     return -1;
-    // }
-
-    // const char* configuration = xaconfig.c_str();
-
-    // STrace << "config json: " << configuration;
-
-    // // xa_sdk_update_identities
-    // // xa_sdk_update_identity_image
-    // returnValue = xa_sdk_configure(configuration);
-    // if (returnValue != XA_ERR_NONE) {
-    //     SError << "Error at xa_sdk_configure";
-
-    //     return -1;
-    // }
-
-    // returnValue = xa_sdk_is_face_recognition_enabled();
-    // if (returnValue != XA_ERR_NONE) {
-    //     SError << "Error at xa_sdk_configure";
-
-    //     return -1;
-    // }
-
-    // xa_fi_image_t image;
-    // image.width = 800;
-    // image.height = 640;
-
-    // image.pixel_format =
-    //     XA_FI_COLOR_RGB888;  // signifies the buffer data format
-
-    // uint8_t* buffer_containing_raw_rgb_data = new uint8_t [image.width*3*image.height];
-
-    // memset(buffer_containing_raw_rgb_data, 't', image.width*3*image.height);
 
 
-    // image.buff =  buffer_containing_raw_rgb_data;  // note this is in RGB order, otherwise
-    //                                      // colors will be swapped
+    
+    RestAPI("GET", "/"); //GET, POST, PUT, DELETE  // Rest API TEst
+    
+    
 
-    // //xa_fi_error_t returnValue;
+   net::ClientConnecton *m_client = new HttpsClient("wss", "ipcamera.adapptonline.com", 443, "/");  //Websocket test
 
-    // xa_sdk_process_image_outputs* process_image_outputs;
 
-    // while (1) {
-    //     returnValue = xa_sdk_process_image(&image, &process_image_outputs);
+   // conn->Complete += sdelegate(&context, &CallbackContext::onClientConnectionComplete);
+   m_client->fnComplete = [&](const Response & response) {
+       std::string reason = response.getReason();
+       StatusCode statuscode = response.getStatus();
+       std::string body = m_client->readStream() ? m_client->readStream()->str() : "";
+       STrace << "SocketIO handshake response:" << "Reason: " << reason << " Response: " << body;
+   };
 
-    //     if (returnValue == XA_ERR_NONE) {
-    //         for (int index = 0;
-    //              index < process_image_outputs->number_of_json_blobs; ++index) {
-    //             xa_sdk_json_blob_t blob = process_image_outputs->blobs[index];
+   m_client->fnPayload = [&](HttpBase * con, const char* data, size_t sz) {
+       STrace << "client->fnPayload " << std::string(data, sz);
+       //m_ping_timeout_timer.Reset();
+       //m_packet_mgr.put_payload(std::string(data,sz));
+   };
 
-    //             if (blob.blob_descriptor == XA_FACE_TRACK_EVENT) {
-    //                 //<
-    //                 // send blob -> json to Face Track Event endpoint >
-    //                 STrace << "json to Face Track Event endpoint: " <<  blob.json;
+   m_client->fnClose = [&](HttpBase * con, std::string str) {
+       STrace << "client->fnClose " << str;
+       //close(0,"exit");
+       //on_close();
+   };
 
-    //             } else if (blob.blob_descriptor == XA_ACCURACY_MONITOR) {
-    //                 //<
-    //                 // send blob -> json to Accuracy Monitor endpoint >
-    //                 STrace << "send blob -> json to Accuracy Monitor endpoint: " <<  blob.json;
-    //             } else {
-    //                 SError << "Not a possible state";
-    //             }
-    //         }
-    //     } else {
-    //         SError << "Error at process_image_outputs";
-    //     }
+   m_client->fnConnect = [&](HttpBase * con) {
 
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
+       m_client->send("{\"messageType\": \"createorjoin\", \"room\": \"room11\"}");
+
+       std::cout << "onConnect:";
+   };
+
+
+   //  conn->_request.setKeepAlive(false);
+   m_client->setReadStream(new std::stringstream);
+   m_client->send();
+   LTrace("sendHandshakeRequest over")
+
+
+    app.waitForShutdown([&](void*) {
+
+        t31Video.stop();
+
+    }
+
+    );
+
+
+
+
 }
