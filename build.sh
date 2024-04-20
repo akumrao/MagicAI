@@ -1,4 +1,7 @@
-Version details of libuv
+
+set -e
+TOP=$(pwd)
+echo "TOP = $TOP"
 
 
 #./configure --host=mips-linux-gnu --disable-database --disable-db-install --with-fallbacks=vt100,vt102,vt300,screen,xterm,xterm-256color,tmux-256color,screen-256color --without-manpages --without-normal --without-progs --without-debug --without-test --enable-widec --prefix=${INSTALLPATH}/_install
@@ -17,28 +20,33 @@ export CXX=${CROSS_COMPILE}g++
 export LD=${CROSS_COMPILE}ld
 export AR=${CROSS_COMPILE}ar
 export CFLAGS="-O2 -muclibc -fPIC -Wno-error -I${INSTALLPATH}/include -I${INSTALLPATH}/mips-linux-gnu/include/ -I${SDKPATH}/include/"
-export CPPFLAGS="-O2 -muclibc -fPIC  -I${INSTALLPATH}/include -I${INSTALLPATH}/mips-linux-gnu/include/ I${SDKPATH}/include/"
+export CPPFLAGS="-O2 -muclibc -fPIC  -I${INSTALLPATH}/include -I${INSTALLPATH}/mips-linux-gnu/include/ -I${SDKPATH}/include/"
 export LDFLAGS="-O2 -muclibc -L${INSTALLPATH}/lib -L${INSTALLPATH}/mips-linux-gnu/lib/ -L${SDKPATH}/lib/uclibc/"
+
+
+mkdir -p src/libuv/build
+cd  src/libuv/build
 
 cmake .. -DUSE_MUCLIBC=ON
+make -j8
 
 
+cd ../../../
+
+cd src/openssl
+
+rm -rf openssl
+if [[ ! -f openssl-1.1.1t.tar.gz ]]; then
+    wget 'https://www.openssl.org/source/openssl-1.1.1t.tar.gz'
+fi
+tar xvf openssl-1.1.1t.tar.gz
+mv openssl-1.1.1t openssl
+cd openssl
+
+./Configure linux-mips32 no-async  no-shared no-dso --prefix="$TOP/src/openssl/build"
+
+make clean
+make -j8
+make -j8 install
 
 
-#export INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_472/mips-gcc472-glibc216-64bit"
-export INSTALLPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/resource/toolchain/gcc_540/mips-gcc540-glibc222-64bit-r3.3.0"
-#export SDKPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/sdk/4.7.2"
-export SDKPATH="/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/sdk/5.4.0"
-TOOLCHAIN=$INSTALLPATH/bin
-CROSS_COMPILE=$TOOLCHAIN/mips-linux-gnu-
-export CC=${CROSS_COMPILE}gcc
-export CXX=${CROSS_COMPILE}g++
-export LD=${CROSS_COMPILE}ld
-export AR=${CROSS_COMPILE}ar
-export CFLAGS="-O2 -muclibc -static -Wno-error -I${INSTALLPATH}/include -I${INSTALLPATH}/mips-linux-gnu/include/ -I${SDKPATH}/include/"
-export CPPFLAGS="-O2 -muclibc -static  -I${INSTALLPATH}/include -I${INSTALLPATH}/mips-linux-gnu/include/ -I${SDKPATH}/include/"
-export LDFLAGS="-O2 -muclibc -L${INSTALLPATH}/lib -L${INSTALLPATH}/mips-linux-gnu/lib/ -L${SDKPATH}/lib/uclibc/"
-
-
-
-for i in *.c; do mv -- "$i" "${i%.c}.cpp"; done

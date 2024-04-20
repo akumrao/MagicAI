@@ -82,42 +82,42 @@ int main(int argc, char** argv) {
     RestAPI("GET", "/"); //GET, POST, PUT, DELETE
     
     
-//
-//    net::ClientConnecton *m_client = new HttpsClient("wss", "localhost", 443, "/");
-//
-//
-//    // conn->Complete += sdelegate(&context, &CallbackContext::onClientConnectionComplete);
-//    m_client->fnComplete = [&](const Response & response) {
-//        std::string reason = response.getReason();
-//        StatusCode statuscode = response.getStatus();
-//        std::string body = m_client->readStream() ? m_client->readStream()->str() : "";
-//        STrace << "SocketIO handshake response:" << "Reason: " << reason << " Response: " << body;
-//    };
-//
-//    m_client->fnPayload = [&](HttpBase * con, const char* data, size_t sz) {
-//        STrace << "client->fnPayload " << std::string(data, sz);
-//        //m_ping_timeout_timer.Reset();
-//        //m_packet_mgr.put_payload(std::string(data,sz));
-//    };
-//
-//    m_client->fnClose = [&](HttpBase * con, std::string str) {
-//        STrace << "client->fnClose " << str;
-//        //close(0,"exit");
-//        //on_close();
-//    };
-//
-//    m_client->fnConnect = [&](HttpBase * con) {
-//
-//        m_client->send("{\"messageType\": \"createorjoin\", \"room\": \"room11\"}");
-//
-//        std::cout << "onConnect:";
-//    };
-//
-//
-//    //  conn->_request.setKeepAlive(false);
-//    m_client->setReadStream(new std::stringstream);
-//    m_client->send();
-//    LTrace("sendHandshakeRequest over")
+
+   net::ClientConnecton *m_client = new HttpsClient("wss", "192.168.0", 443, "/");
+
+
+   // conn->Complete += sdelegate(&context, &CallbackContext::onClientConnectionComplete);
+   m_client->fnComplete = [&](const Response & response) {
+       std::string reason = response.getReason();
+       StatusCode statuscode = response.getStatus();
+       std::string body = m_client->readStream() ? m_client->readStream()->str() : "";
+       STrace << "SocketIO handshake response:" << "Reason: " << reason << " Response: " << body;
+   };
+
+   m_client->fnPayload = [&](HttpBase * con, const char* data, size_t sz) {
+       STrace << "client->fnPayload " << std::string(data, sz);
+       //m_ping_timeout_timer.Reset();
+       //m_packet_mgr.put_payload(std::string(data,sz));
+   };
+
+   m_client->fnClose = [&](HttpBase * con, std::string str) {
+       STrace << "client->fnClose " << str;
+       //close(0,"exit");
+       //on_close();
+   };
+
+   m_client->fnConnect = [&](HttpBase * con) {
+
+       m_client->send("{\"messageType\": \"createorjoin\", \"room\": \"room11\"}");
+
+       std::cout << "onConnect:";
+   };
+
+
+   //  conn->_request.setKeepAlive(false);
+   m_client->setReadStream(new std::stringstream);
+   m_client->send();
+   LTrace("sendHandshakeRequest over")
 
 
 
@@ -142,25 +142,7 @@ int main(int argc, char** argv) {
     std::cout << msg << std::endl;
 
 #if XALIENT_TEST
-    {
-        //   printf("start of facial rec.\n");
-
-        xa_fi_error_t returnValue;
-
-        const char * path_to_vision_cell = "/mnt"; // For shared lib
-        returnValue = xa_sdk_initialize(path_to_vision_cell); // For shared lib
-
-        // returnValue = xa_sdk_initialize(); // For static lib
-
-        if (returnValue != XA_ERR_NONE) {
-
-
-            //printf("error1\n");
-
-        }
-
-    }
-
+  
 
     {
 
@@ -174,7 +156,7 @@ int main(int argc, char** argv) {
         if (returnValue != XA_ERR_NONE) {
 
 
-            // printf("error2\n");
+             SError << "xa_sdk_initialize failed ";
 
         }
 

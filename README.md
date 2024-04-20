@@ -7,3 +7,9 @@ xa_sdk_initialize()
 
 
 
+# to test
+
+cd /mnt 
+runConfTest 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt
+
