@@ -71,7 +71,7 @@ void RestAPI(std::string method, std::string uri,json &m)
     conn->_request.setKeepAlive(false);
     
     conn->_request.setContentLength(sendMe.size());
-    conn->_request.setContentType("application/x-www-form-urlencoded");
+    conn->_request.setContentType("application/json");
     
     
     conn->setReadStream(new std::stringstream);
