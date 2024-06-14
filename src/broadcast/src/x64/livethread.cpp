@@ -249,7 +249,6 @@ void T31H264::run()
         
         if(  ctx->liveThread->t31rgba->record ==true)
         {
-           // ctx->liveThread->t31rgba->record = false;
             
             if(ctx->signaler)
             {
@@ -367,13 +366,13 @@ int LiveThread::T31Exit()
 
 int LiveThread::XAInit()
 {
-
+     return 0;
 }
 
 
 int LiveThread::XAExit()
 {
-
+    return 0;
 
 }
 
