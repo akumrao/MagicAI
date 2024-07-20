@@ -69,8 +69,7 @@ int main( void )
 #include <string>
 #include <vector>
 
-
-
+#include "bio.h"
 
 
 #include <functional>
@@ -105,7 +104,7 @@ public:
     /// Returns true when the handshake is complete.
 
     /// Start/continue the SSL handshake process.
-    void handshake();
+    int handshake();
 
     /// Returns the number of bytes available in
     /// the SSL buffer for immediate reading.
@@ -117,16 +116,16 @@ public:
     
     bool isConnected() const ;
 
-    std::string getTLSError(int )  ;
+    std::string getTLSError(int );
 
+    void stay_uptodate( );
+    int tls_err_hdlr( const int err_code);
+    
+    void addIncomingData(const char *data, size_t len);
     
     static void my_debug(void *ctx, int level, const char *file, int line,   const char *str);
     static int my_verify(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags);
-    
-    static int ssl_recv(void *ctx, unsigned char *buf, size_t len);
 
-    static int ssl_send(void *ctx, const unsigned char *buf, size_t len);
-    
     
     bool setup(const mbedtls_ssl_config *conf, const char *hostname);
     
@@ -137,10 +136,18 @@ protected:
     
 
 
+ BIO     *app_bio_; //Our BIO, All IO should be through this
+ BIO     *ssl_bio_; //the ssl BIO used only by openSSL
+
+int      oprn_state;
 
 
-
-
+enum uv_tls_state {
+    STATE_INIT         = 0x0
+    ,STATE_HANDSHAKING = 0x1
+    ,STATE_IO          = 0x2 //read or write mode
+    ,STATE_CLOSING     = 0x4 // This means closed state also
+};
 
     
 protected:

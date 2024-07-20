@@ -65,40 +65,61 @@ SslConnection::~SslConnection()
 
 
 
-
-
-
 void SslConnection::send(const char* data, size_t len)
 {
- 
-    int ret;
+    SInfo << "Send " <<  data   << " len "  << len;
     
-    do
-    {
-        
-        ret = mbedtls_ssl_read( &_sslAdapter._ssl, (unsigned char*) data, len );
+     size_t rv = (size_t)mbedtls_ssl_write( &_sslAdapter._ssl,(const unsigned char *) data, len);
 
-        if( ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE )
-            continue;
+    size_t pending = 0;
+    
+    char *encoded_data = nullptr;
+    
+    
+    if( (pending = BIO_ctrl_pending(_sslAdapter.app_bio_) ) > 0 ) {
 
-        if( ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY )
-            break;
+        encoded_data = (char*)malloc(pending);
+       // encoded_data.len = pending;
 
-        if( ret < 0 )
-        {
-            SError <<  "failed\n  ! mbedtls_ssl_read returned "  <<  ret;
-            break;
-        }
-
-        if( ret == 0 )
-        {
-         
-            break;
-        }
-
-     
+        rv = BIO_read(_sslAdapter.app_bio_, encoded_data , pending);
+       // data2encode->len = rv;
+       assert(rv == len);
+        Write(  encoded_data, rv , _sslAdapter.cb);
+        _sslAdapter.cb = nullptr;
+        free(encoded_data);
     }
-    while( 1 );
+    //return encoded_data;
+    
+    
+    
+   // int ret;
+    
+//    do
+//    {
+//        
+//        ret = mbedtls_ssl_read( &_sslAdapter._ssl, (unsigned char*) data, len );
+//
+//        if( ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE )
+//            continue;
+//
+//        if( ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY )
+//            break;
+//
+//        if( ret < 0 )
+//        {
+//            SError <<  "failed\n  ! mbedtls_ssl_read returned "  <<  ret;
+//            break;
+//        }
+//
+//        if( ret == 0 )
+//        {
+//         
+//            break;
+//        }
+//
+//     
+//    }
+//    while( 1 );
     
     return ;
 }
@@ -118,15 +139,21 @@ void SslConnection::on_tls_read(const char* data, size_t len)
 {
     SInfo << "On SSL read: " << len << " data"  <<  data ; 
 
-    int ret =0;
-    while( ( ret = mbedtls_ssl_write( & _sslAdapter._ssl, (const unsigned char*) data, len ) ) <= 0 )
-    {
-        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
-        {
-            SError <<  " failed\n  ! mbedtls_ssl_write failed " <<  ret ;
-            break;
-        }
-    }
+    
+    BIO_write( _sslAdapter.app_bio_,data , len);
+    
+    _sslAdapter.addIncomingData(data, len);
+    
+    
+//    int ret =0;
+//    while( ( ret = mbedtls_ssl_write( & _sslAdapter._ssl, (const unsigned char*) data, len ) ) <= 0 )
+//    {
+//        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+//        {
+//            SError <<  " failed\n  ! mbedtls_ssl_write failed " <<  ret ;
+//            break;
+//        }
+//    }
     
 }
 

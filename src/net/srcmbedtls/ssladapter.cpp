@@ -129,10 +129,23 @@ const char defaultCertificate[]
 SSLAdapter::SSLAdapter(SslConnection *socket)
     : _socket(socket)
 {
+    
+    ssl_bio_ = 0;
+    app_bio_ = 0;
+    oprn_state = STATE_INIT;
+    
 }
 
 SSLAdapter::~SSLAdapter()
 {
+    
+    if (app_bio_) {
+        BIO_free_all(app_bio_);
+    }
+    if (ssl_bio_) {
+        BIO_free_all(ssl_bio_);
+    }
+    
     LTrace("Destroy")
 
 }
@@ -158,6 +171,24 @@ void SSLAdapter::initClient()
 
         SError << " Failed mbedtls_ctr_drbg_seed ";
     }
+
+
+
+//    if (TLS_ANY_VERSION != ssl->version) {
+//        if (TLS1_2_VERSION == ssl->version)
+//            version = MBEDTLS_SSL_MINOR_VERSION_3;
+//        else if (TLS1_1_VERSION == ssl->version)
+//            version = MBEDTLS_SSL_MINOR_VERSION_2;
+//        else
+//            version = MBEDTLS_SSL_MINOR_VERSION_1;
+//
+//        mbedtls_ssl_conf_max_version(&ssl_pm->conf, MBEDTLS_SSL_MAJOR_VERSION_3, version);
+//        mbedtls_ssl_conf_min_version(&ssl_pm->conf, MBEDTLS_SSL_MAJOR_VERSION_3, version);
+//    } else {
+        mbedtls_ssl_conf_max_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+        mbedtls_ssl_conf_min_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
+   // }
+           mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg); 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if FROMFILE
 
@@ -195,9 +226,7 @@ void SSLAdapter::initClient()
             
             
    
-        mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
-        mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg);
-
+       
        
             
     
@@ -213,30 +242,40 @@ void SSLAdapter::initClient()
             return;
         }
 
-        mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
-        mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg);
-
-
-
+      
 
 
 #endif
 
-    #if UNSAFE
-        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
+
+     setup(&_ssl_conf, nullptr);
+
+
+     
+
+ 
+
+        #if UNSAFE
+        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_OPTIONAL); //MBEDTLS_SSL_VERIFY_OPTIONAL);
 #endif
+    
+    mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
+  
+    mbedtls_ssl_conf_own_cert(&_ssl_conf, &_cacert, NULL);
+      
+    
+
+
+
 
         
    #if DEBUG_LEVEL > 0
-        mbedtls_ssl_conf_verify(&_ssl_conf, my_verify, NULL);
+       // mbedtls_ssl_conf_verify(&_ssl_conf, my_verify, NULL);
         mbedtls_ssl_conf_dbg(&_ssl_conf, my_debug, NULL);
         mbedtls_debug_set_threshold(DEBUG_LEVEL);
  #endif     
 
-        
-        
 
-    setup(&_ssl_conf, nullptr);
         
         
     //
@@ -247,31 +286,6 @@ void SSLAdapter::initClient()
 //    }
     
 }
-
-
-
-
-int SSLAdapter::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
-   
-    SSLAdapter *stream = static_cast<SSLAdapter *>(ctx);
-    stream->_socket->on_read((const char*) buf, len);
-    
-    stream->_socket->on_read((const char*) buf, len);
-    
-    return len;
-   
-}
-
-int SSLAdapter::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
-    
-    SSLAdapter *stream = static_cast<SSLAdapter *>(ctx);
-    
-     int ret = stream->_socket->Write((const char*)buf, len, stream->cb);
-    stream->cb = nullptr;
-    
-    return ret;
-}
-
 
 
 
@@ -295,8 +309,15 @@ bool SSLAdapter::setup(const mbedtls_ssl_config *conf, const char *hostname)
             return false;
         }
     }
+    
+    
+    ssl_bio_ = SSL_BIO_new(BIO_BIO);
+    app_bio_ = SSL_BIO_new(BIO_BIO);
+    BIO_make_bio_pair(ssl_bio_, app_bio_);
 
-    mbedtls_ssl_set_bio(&_ssl, this, ssl_send, ssl_recv, NULL );
+    
+
+    mbedtls_ssl_set_bio(&_ssl, ssl_bio_, BIO_net_send, BIO_net_recv, NULL);
 
     return true;
 }
@@ -322,7 +343,16 @@ void SSLAdapter::shutdown()
     }
     /* Ignore other errors, the connection may be closed or unusable */
 
-    mbedtls_ssl_free(&_ssl);
+   
+    mbedtls_ctr_drbg_free(&_ctr_drbg);
+    mbedtls_entropy_free(&_entropy);
+    mbedtls_ssl_config_free(&_ssl_conf);
+    mbedtls_x509_crt_free(& _cacert );
+    
+
+   
+
+     mbedtls_ssl_free(&_ssl);
     
     
 }
@@ -348,40 +378,73 @@ void SSLAdapter::shutdown()
 //}
 
 
-void SSLAdapter::handshake()
+int SSLAdapter::handshake()
 {
-    int ret = 0;
+//    int ret = 0;
+//    
+//    while( ( ret = mbedtls_ssl_handshake( &_ssl ) ) != 0 )
+//    {
+//        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+//        {
+//
+//            SError << " failed\n  ! mbedtls_ssl_handshake returned "  << getTLSError(ret);
+//            return;
+//        }
+//    }
+//
+//
+//
+//    /*
+//     * 5. Verify the server certificate
+//     */
+//
+//    uint32_t flags;
+//    /* In real life, we probably want to bail out when ret != 0 */
+//    if( ( flags = mbedtls_ssl_get_verify_result( &_ssl ) ) != 0 )
+//    {
+//        char vrfy_buf[512];
+//
+//       
+//
+//        mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
+//        
+//         SError << " Failed ssl cert verification " << vrfy_buf;
+//
+//    }
+   if( oprn_state & STATE_IO) 
+   {
+        return 1;
+   }
+    int rv = 0, ssl_error;
+    rv = mbedtls_ssl_handshake(&_ssl);
     
-    while( ( ret = mbedtls_ssl_handshake( &_ssl ) ) != 0 )
+    rv = tls_err_hdlr(rv);
+
+    oprn_state = STATE_HANDSHAKING;
+
+    if(rv == 0) 
     {
-        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+        oprn_state = STATE_IO;
+        int status = mbedtls_ssl_get_verify_result(&_ssl);
+
+        if (status) 
         {
+            char vrfy_buf[512];
 
-            SError << " failed\n  ! mbedtls_ssl_handshake returned "  << getTLSError(ret);
-            return;
+            //mbedtls_printf( " failed\n" );
+
+        //    mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
+
+           //  SError << " Failed ssl cert verification " << vrfy_buf;
         }
+
+
+//        if(tls->on_tls_connect) {
+//            assert(tls->con_req);
+//            tls->on_tls_connect(tls->con_req, status);
+//        }
     }
-
-
-
-    /*
-     * 5. Verify the server certificate
-     */
-
-    uint32_t flags;
-    /* In real life, we probably want to bail out when ret != 0 */
-    if( ( flags = mbedtls_ssl_get_verify_result( &_ssl ) ) != 0 )
-    {
-        char vrfy_buf[512];
-
-       
-
-        mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
-        
-         SError << " Failed ssl cert verification " << vrfy_buf;
-
-    }
-
+    return 0;
     
 }
 
@@ -391,6 +454,7 @@ bool SSLAdapter::isConnected() const {
 
    _ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER;
 }
+
 
 std::string SSLAdapter::getTLSError(int err)  {
     
@@ -408,7 +472,75 @@ std::string SSLAdapter::getTLSError(int err)  {
 */
 
 
+void SSLAdapter::addIncomingData(const char *data, size_t len)
+{
+   
+    if( 1 != handshake()) {
+        //recheck if handshake is complete now
+        return ;//STATE_HANDSHAKING;
+    }
+//
+//    //clean the slate
+    memset((void*) data, 0, len);
+    int rv = mbedtls_ssl_read(&_ssl, (unsigned char *)data, len);
+    tls_err_hdlr( rv);
 
+   // dcrypted->len = (size_t) rv;
+    assert( rv ==  len);
+    _socket->on_read(data,  rv) ;  //
+     
+//    if( tls->rd_cb) {
+//        tls->rd_cb(tls, rv, dcrypted);
+//    }
+//    return rv;
+   
+}
+
+//handle only non fatal error currently
+int SSLAdapter::tls_err_hdlr( const int err_code)
+{
+    switch(err_code) {
+        case MBEDTLS_ERR_SSL_WANT_WRITE:
+        case MBEDTLS_ERR_SSL_WANT_READ: {
+            stay_uptodate();
+            break;
+        }
+        case 0: {
+            return 0;
+        }
+        default: {
+            char buf[512];
+            SError <<   getTLSError(err_code);
+            return err_code;
+        }
+    }
+    return err_code;
+}
+
+
+
+void SSLAdapter::stay_uptodate( )
+{
+ 
+
+    size_t pending = BIO_ctrl_pending(app_bio_);
+    if( pending > 0) {
+
+        //Need to free the memory
+        char *mybuf;
+        
+        mybuf = (char*)malloc(pending);
+
+        int rv = BIO_read(app_bio_, mybuf, pending);
+        assert( rv == pending );
+
+        _socket->Write( mybuf, rv, cb);
+        assert(rv == pending);
+
+        free(mybuf);
+        mybuf = 0;
+    }
+}
 
 
 
