@@ -249,7 +249,7 @@ void T31H264::run()
 
         ncount = ncount%240;
         
-        if(  ctx->liveThread->t31rgba->record ==true)
+        if(  ctx && ctx->liveThread->t31rgba->record ==true)
         {
             
             if(ctx->signaler)
@@ -303,7 +303,7 @@ void T31H264::run()
         }
 
        // ctx.muRecFrame.lock();
-        if(ctx->liveFrame)
+        if(ctx && ctx->liveFrame)
         ctx->liveFrame->run(&basicframe); // starts the frame filter chain
         //ctx->muRecFrame.unlock(); 
 

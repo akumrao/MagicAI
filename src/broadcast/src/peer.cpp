@@ -10,6 +10,8 @@
 #include "Settings.h"
 #include <sys/reboot.h>
 
+#include "base/datetime.h"
+
 #if defined(__x86_64__)
 #else
 #include "sample-common.h"
@@ -23,28 +25,6 @@ namespace base
 {
 namespace web_rtc
 {
-
-
-// cricket::Candidate CreateLocalUdpCandidate(const rtc::SocketAddress &address)
-// {
-//     cricket::Candidate candidate;
-//     candidate.set_component(cricket::ICE_CANDIDATE_COMPONENT_DEFAULT);
-//     candidate.set_protocol(cricket::UDP_PROTOCOL_NAME);
-//     candidate.set_address(address);
-//     candidate.set_type(cricket::LOCAL_PORT_TYPE);
-//     return candidate;
-// }
-
-// cricket::Candidate CreateLocalTcpCandidate(const rtc::SocketAddress &address)
-// {
-//     cricket::Candidate candidate;
-//     candidate.set_component(cricket::ICE_CANDIDATE_COMPONENT_DEFAULT);
-//     candidate.set_protocol(cricket::TCP_PROTOCOL_NAME);
-//     candidate.set_address(address);
-//     candidate.set_type(cricket::LOCAL_PORT_TYPE);
-//     candidate.set_tcptype(cricket::TCPTYPE_PASSIVE_STR);
-//     return candidate;
-// }
 
 
 bool AddCandidateToFirstTransport(cricket::Candidate *candidate, webrtc::SessionDescriptionInterface *sdesc)
@@ -465,6 +445,19 @@ void Peer::OnMessage(const webrtc::DataBuffer& buffer) {
   {
         if(!strncmp(msg, "startrec",   8 )  )
         {
+
+           Timestamp ts;
+           Timestamp::TimeVal time = ts.epochMicroseconds();
+           int milli = int(time % 1000000) / 1000;
+
+           std::time_t time1 = ts.epochTime();
+           struct std::tm* tms = std::localtime(&time1);
+           
+           char date[100] = {'\0'}; //"%Y-%m-%d-%H-%M-%S"
+           int len = std::strftime(date, sizeof (date), "%Y-%m-%d-%H-%M-%S", tms);
+           
+           _manager->ctx->liveThread->t31rgba->m_date = date;
+
             
            ((LiveThread*)_manager->ctx->liveThread)->t31rgba->record = true;
                      
@@ -557,7 +550,7 @@ void Peer::OnMessage(const webrtc::DataBuffer& buffer) {
         {
 
             std::string name = jsonMsg["name"].get<std::string>();  
-            name = "/mnt/OTA/" + name;
+            name = Settings::configuration.OTA  + name;
             int size  = jsonMsg["size"].get<int>();  
             if(size)
             {
@@ -591,7 +584,7 @@ void Peer::OnMessage(const webrtc::DataBuffer& buffer) {
         }
         else if(type == "RESET")
         {
-          std::remove("/mnt/config.js");
+          std::remove("./config.js");
         }
         else if(type == "DEBUG")
         {
