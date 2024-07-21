@@ -1,6 +1,4 @@
 {
-    "dtlsCertificateFile": "/var/tmp/key/certificate.crt",
-    "dtlsPrivateKeyFile": "/var/tmp/key/private_key.pem",
     "storage": "/mnt/pvi-storage/",
     "OTA": "/mnt/OTA/",
     "log": "/mnt/log/",
@@ -12,8 +10,7 @@
     "facedetect": true,
     "motionevent": true,
     "authtimeout": 3600,
-    "Mp4Size_Key": 40,
-    "SegSize_key": 5,
+    "recordsize": 250,   
     "logLevel": "info"
     
 }

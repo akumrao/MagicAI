@@ -211,7 +211,7 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
           
             char filePath[128];
              
-            sprintf(filePath, "%s/frame-%.3d.h264", pathDate.c_str() , ++recframeCount);
+            sprintf(filePath, "%s/frame-%.3d.h264", m_pathDate.c_str() , ++recframeCount);
 
                             
             in_file = fopen(filePath,"wb");
@@ -401,20 +401,63 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
                 len = std::strftime(dates, sizeof (dates), "%Y-%m-%d", tms);
                 
                 
-              
-                if( dayDate != datetime)
-                {   dayDate = datetime;
-                    pathDate = Settings::configuration.storage +  "/" + dayDate  ;
-                    if (!base::fs::exists(pathDate ))
+                if( m_date != dates) // do cleaning
+                {
+                    m_date = dates;
+    
+                  //  std::time_t lastweek =  datetm - 604800;  // ;// 7*24*60*60;
+                   // struct std::tm* tms = std::localtime(&lastweek);
+
+                    //char lwdates[100] = {'\0'}; //"%Y-%m-%d-%H-%M-%S"
+                    //len = std::strftime(lwdates, sizeof (lwdates), "%Y-%m-%d", tms);
+           
+                    for (json::iterator itDate = mf.root.begin(); itDate != mf.root.end(); ++itDate) 
                     {
-                       mkdir(pathDate.c_str(),0777);
+                        struct tm timeinfo= {};
+                        std::string lwdates = itDate.key() ;
+                        strptime(lwdates.c_str(), "%Y-%m-%d", &timeinfo);
+                        time_t lastweek = mktime(&timeinfo);
+
+                        double diff = difftime(datetm,  lastweek  );
+
+                        //std::cout << "lwdates: " << lwdates << std::endl;
+                        // 
+                        //std::cout << "Year: " << 1900 + timeinfo.tm_year << std::endl;
+                        //std::cout << "Month: " << 1 + timeinfo.tm_mon << std::endl;
+                        //std::cout << "day: " << timeinfo.tm_mday << std::endl;
+                         
+                       //std::cout << "diff " << diff/(24*60*60) <<  " lastweek " << lastweek  <<  std::endl;
+
+                         
+                        if( diff > double(604800) )
+                        {
+                            for (json::iterator itDT =  itDate.value().begin(); itDT != itDate.value().end(); ++itDT) 
+                            {
+                                std::cout << *itDT << '\n';
+                                std::string tmp = Settings::configuration.storage +  itDT->get<std::string>() ;
+                                if (base::fs::exists(tmp ))
+                                base::fs::rmdir(tmp);
+                            }
+
+                            mf.root.erase(lwdates);
+                        }
+                    }
+                    
+                }
+                
+                if( m_dateTime != datetime)
+                {   m_dateTime = datetime;
+                    m_pathDate = Settings::configuration.storage + m_dateTime  ;
+                    if (!base::fs::exists(m_pathDate ))
+                    {
+                       mkdir(m_pathDate.c_str(),0777);
                     }
                     
                     if( mf.root.find(dates) ==   mf.root.end())
                     {
                         mf.root[dates] = json::array();
                     }
-                    mf.root[dates].push_back(dayDate);
+                    mf.root[dates].push_back(m_dateTime);
                  
                     WriteTofile(&m_sps[0], m_sps.size(), recframeCount);
                     WriteTofile(&m_pps[0], m_pps.size(), recframeCount);
