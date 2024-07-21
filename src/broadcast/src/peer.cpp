@@ -414,17 +414,17 @@ void Peer::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> channe
     if (state == webrtc::DataChannelInterface::kOpen) {
       //if (OnLocalDataChannelReady)
       //  OnLocalDataChannelReady();
-         cnfg::Configuration identity;
-        identity.load(Settings::configuration.storage + "manifest.js");
-
-        if(identity.loaded())
-        {
-            json m;
-            m["messageType"] = "RECORDING";
-            m["messagePayload"] =  identity.root;
-            DataChannelSend(m.dump());
-
-        }
+//         cnfg::Configuration identity;
+//        identity.load(Settings::configuration.storage + "manifest.js");
+//
+//        if(identity.loaded())
+//        {
+//            json m;
+//            m["messageType"] = "RECORDING";
+//            m["messagePayload"] =  identity.root;
+//            DataChannelSend(m.dump());
+//
+//        }
       RTC_LOG(LS_INFO) << "Data channel is open";
     }
   }
@@ -441,25 +441,20 @@ void Peer::OnMessage(const webrtc::DataBuffer& buffer) {
   memcpy(msg, buffer.data.data(), size);
   msg[size] = 0;
 
-  if(  size < 11 )
+  if(  size < 21 )
   {
         if(!strncmp(msg, "startrec",   8 )  )
         {
 
-           Timestamp ts;
-           Timestamp::TimeVal time = ts.epochMicroseconds();
-           int milli = int(time % 1000000) / 1000;
+            Timestamp ts;
+         //  Timestamp::TimeVal time = ts.epochMicroseconds();
+           ///int milli = int(time % 1000000) / 1000;
 
-           std::time_t time1 = ts.epochTime();
-           struct std::tm* tms = std::localtime(&time1);
-           
-           char date[100] = {'\0'}; //"%Y-%m-%d-%H-%M-%S"
-           int len = std::strftime(date, sizeof (date), "%Y-%m-%d-%H-%M-%S", tms);
-           
-           _manager->ctx->liveThread->t31rgba->m_date = date;
+            std::time_t time1 = ts.epochTime();
+                     _manager->ctx->liveThread->t31rgba->m_date = time1;
 
             
-           ((LiveThread*)_manager->ctx->liveThread)->t31rgba->record = true;
+            ((LiveThread*)_manager->ctx->liveThread)->t31rgba->record = true;
                      
             //ATOMIC_STORE_BOOL(&gSampleConfiguration->startrec, TRUE); 
 
@@ -467,29 +462,25 @@ void Peer::OnMessage(const webrtc::DataBuffer& buffer) {
         {
            // ATOMIC_STORE_BOOL(&gSampleConfiguration->startrec, FALSE); 
 
-        }else if(!strncmp(msg, "recDates",   8 )  )
-        {
-           char json[256]={'\0'};
-
-//           MUTEX_LOCK(gSampleConfiguration->recordReadLock);
-//           getJson(json);
-//           MUTEX_UNLOCK(gSampleConfiguration->recordReadLock);
-//
-//           printf("final %s\n", json); 
-//
-//          STATUS retStatus = STATUS_SUCCESS;
-//          retStatus = dataChannelSend(pDataChannel, FALSE, (PBYTE) json, STRLEN(json));
-//          if (retStatus != STATUS_SUCCESS) {
-//            DLOGI("[KVS Master] dataChannelSend(): operation returned status code: 0x%08x \n", retStatus);
-//          }
-
-
         }
         else if(!strncmp(msg, "starttime:",   10 )  )
         {
-            //strcpy( gSampleConfiguration->timeStamp, &pMessage[10]);
+            char timeStamp[11]= {'\0'};
+            strncpy( timeStamp, &msg[10], 10);
 
-            //ATOMIC_STORE_BOOL(&gSampleConfiguration->newRecording, TRUE);
+
+            
+            cnfg::Configuration identity;
+            identity.load(Settings::configuration.storage + "manifest.js");
+
+            if(identity.loaded() &&  identity.root.find(timeStamp) != identity.root.end() )
+            {
+                json m;
+                m["messageType"] = "RECORDING";
+                m["messagePayload"] =  identity.root[timeStamp];
+                DataChannelSend(m.dump());
+
+           }
         }
     }
    else

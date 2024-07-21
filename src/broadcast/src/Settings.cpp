@@ -109,9 +109,9 @@ void Settings::SetConfiguration(json &cnfg)
 //        Settings::configuration.x264Enc = cnfg["x264Enc"].get<uint16_t>();
 //    }
 
-    if (cnfg.find("Mp4Size_Key") != cnfg.end())
+    if (cnfg.find("recordsize") != cnfg.end())
     {
-        Settings::configuration.Mp4Size_Key = cnfg["Mp4Size_Key"].get<uint16_t>();
+        Settings::configuration.recordsize = cnfg["recordsize"].get<uint16_t>();
     }
 
 //    if (cnfg.find("SegSize_key") != cnfg.end())

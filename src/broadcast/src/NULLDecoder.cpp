@@ -190,7 +190,7 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
 
             if( mf.root.is_null() )
             {
-               mf.root = json::array();
+               mf.root = json::object();
             }
                     
      
@@ -226,7 +226,7 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
         }
  
 
-        void NULLDecoder::runNULLEnc(unsigned char *buffer, int size,  int & recframeCount , LiveConnectionContext  *ctx , std::string &date) 
+        void NULLDecoder::runNULLEnc(unsigned char *buffer, int size,  int & recframeCount , LiveConnectionContext  *ctx , std::time_t &datetm) 
         {
 
             int cfg{0}; 
@@ -371,13 +371,13 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
                      recframeCount = -1;  
                     
                 }
-                else if( recframeCount >= 250)
+                else if( recframeCount >=  Settings::configuration.recordsize)
                 {
                     
-                   if(recframeCount++ == 250)
+                   if(recframeCount++ ==  Settings::configuration.recordsize)
                    {
                         mf.save();
-                        recordingTime(ctx);
+                       // recordingTime(ctx);
                    }
                 }
                 else if(idr )
@@ -391,16 +391,30 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
             }
             else if( Settings::configuration.recording && !recframeCount )
             {
+                
+                struct std::tm* tms = std::localtime(&datetm);
+
+                char datetime[100] = {'\0'}; //"%Y-%m-%d-%H-%M-%S"
+                int len = std::strftime(datetime, sizeof (datetime), "%Y-%m-%d-%H-%M-%S", tms);
+                
+                char dates[100] = {'\0'}; //"%Y-%m-%d-%H-%M-%S"
+                len = std::strftime(dates, sizeof (dates), "%Y-%m-%d", tms);
+                
+                
               
-                if( dayDate != date)
-                {   dayDate = date;
+                if( dayDate != datetime)
+                {   dayDate = datetime;
                     pathDate = Settings::configuration.storage +  "/" + dayDate  ;
                     if (!base::fs::exists(pathDate ))
                     {
                        mkdir(pathDate.c_str(),0777);
                     }
                     
-                    mf.root.push_back(dayDate);
+                    if( mf.root.find(dates) ==   mf.root.end())
+                    {
+                        mf.root[dates] = json::array();
+                    }
+                    mf.root[dates].push_back(dayDate);
                  
                     WriteTofile(&m_sps[0], m_sps.size(), recframeCount);
                     WriteTofile(&m_pps[0], m_pps.size(), recframeCount);
@@ -413,9 +427,9 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
             }
             
             
-             delayFrame();
+            delayFrame();
              
-             break;
+            break;
              
             
             }// end for
@@ -477,7 +491,7 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
            vframecount =0;
         }
         
-        
+        /*
         void NULLDecoder::recordingTime(LiveConnectionContext  *ctx )
         {
             cnfg::Configuration identity;
@@ -492,7 +506,7 @@ int parse_nal(  unsigned char **nal, int &length , int & payload_type, int &size
 
             }
         }
-             
+        */    
 
 
     }// ns web_rtc

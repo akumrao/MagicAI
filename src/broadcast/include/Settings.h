@@ -30,7 +30,7 @@ public:
 
         // bool tcpRtsp{true};
         
-        uint16_t Mp4Size_Key{40};
+        uint16_t recordsize{250};
         // uint16_t SegSize_key{5};
 
         //std::string dtlsCertificateFile;
