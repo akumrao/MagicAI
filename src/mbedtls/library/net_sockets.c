@@ -539,6 +539,9 @@ void mbedtls_net_usleep( unsigned long usec )
  */
 int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
 {
+    printf("mbedtls_net_recv %d \n" , (int)len  );
+    
+    
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     int fd = ((mbedtls_net_context *) ctx)->fd;
 
@@ -619,6 +622,8 @@ int mbedtls_net_recv_timeout( void *ctx, unsigned char *buf,
  */
 int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len )
 {
+    printf("mbedtls_net_send %d \n" , (int)len );
+    
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     int fd = ((mbedtls_net_context *) ctx)->fd;
 

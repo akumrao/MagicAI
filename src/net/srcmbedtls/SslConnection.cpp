@@ -137,8 +137,10 @@ void SslConnection::tcpsend(const char* data, size_t len, onSendCallback _cb)
 
 void SslConnection::on_tls_read(const char* data, size_t len)
 {
-    SInfo << "On SSL read: " << len << " data"  <<  data ; 
+    SInfo << "on_tls_read: " << len << " data"  <<  data ; 
 
+    
+    
     
     BIO_write( _sslAdapter.app_bio_,data , len);
     

@@ -29,7 +29,8 @@ public:
 
     tesTcpClient(): SslConnection()
     {
-        Connect("127.0.0.1", 5001);
+        //Connect("127.0.0.1", 5001);
+        Connect("127.0.0.1", 1234);
     }
 
 
@@ -57,9 +58,9 @@ public:
        std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
 
      
-       std::string send = "12345";
-       SslConnection::send((const char*) send.c_str(), 5);
-       std::cout << "TCP Client send data: " << send << "len: " << strlen((const char*) send.c_str()) << std::endl << std::flush;
+//       std::string send = "12345";
+//       SslConnection::send((const char*) send.c_str(), 5);
+//       std::cout << "TCP Client send data: " << send << "len: " << strlen((const char*) send.c_str()) << std::endl << std::flush;
 
     }
     

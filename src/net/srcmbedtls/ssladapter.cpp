@@ -164,8 +164,7 @@ void SSLAdapter::initClient()
     
   
     if (mbedtls_ctr_drbg_seed(&_ctr_drbg, mbedtls_entropy_func, &_entropy,
-                       (const unsigned char *) DRBG_PERS,
-                       sizeof (DRBG_PERS)) != 0)
+                       nullptr, 0) != 0)
 
     {
 
@@ -185,14 +184,24 @@ void SSLAdapter::initClient()
 //        mbedtls_ssl_conf_max_version(&ssl_pm->conf, MBEDTLS_SSL_MAJOR_VERSION_3, version);
 //        mbedtls_ssl_conf_min_version(&ssl_pm->conf, MBEDTLS_SSL_MAJOR_VERSION_3, version);
 //    } else {
+    
+         if( mbedtls_ssl_config_defaults(&_ssl_conf,
+                    MBEDTLS_SSL_IS_CLIENT,
+                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                    MBEDTLS_SSL_PRESET_DEFAULT) != 0) 
+        {
+          SError << "mbedtls_ssl_config_defaults failed";
+        }
+          
+    
         mbedtls_ssl_conf_max_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
         mbedtls_ssl_conf_min_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
    // }
-           mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg); 
+     
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if FROMFILE
 
-    std::string CertFile = "/mnt/key/certificate.crt";
+    std::string CertFile = "/mnt/key/ca-cer.pem";
   
     mbedtls_x509_crt cacert;
 
@@ -215,14 +224,7 @@ void SSLAdapter::initClient()
    
     
     
-    if( mbedtls_ssl_config_defaults(&_ssl_conf,
-                    MBEDTLS_SSL_IS_CLIENT,
-                    MBEDTLS_SSL_TRANSPORT_STREAM,
-                    MBEDTLS_SSL_PRESET_DEFAULT) != 0) 
-    {
-      SError << "mbedtls_ssl_config_defaults failed";
-    }
-            
+   
             
             
    
@@ -248,29 +250,29 @@ void SSLAdapter::initClient()
 #endif
 
 
-     setup(&_ssl_conf, nullptr);
+     
 
 
      
 
  
-
+          mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
         #if UNSAFE
         mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_OPTIONAL); //MBEDTLS_SSL_VERIFY_OPTIONAL);
-#endif
-    
-    mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
-  
-    mbedtls_ssl_conf_own_cert(&_ssl_conf, &_cacert, NULL);
+        #endif
+         mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg); 
       
-    
 
+       // mbedtls_ssl_conf_own_cert(&_ssl_conf, &_cacert, NULL);
+      
+          static const auto host = "127.0.0.1";
+        setup(&_ssl_conf, host);
 
 
 
         
    #if DEBUG_LEVEL > 0
-       // mbedtls_ssl_conf_verify(&_ssl_conf, my_verify, NULL);
+        mbedtls_ssl_conf_verify(&_ssl_conf, my_verify, NULL);
         mbedtls_ssl_conf_dbg(&_ssl_conf, my_debug, NULL);
         mbedtls_debug_set_threshold(DEBUG_LEVEL);
  #endif     
@@ -348,11 +350,10 @@ void SSLAdapter::shutdown()
     mbedtls_entropy_free(&_entropy);
     mbedtls_ssl_config_free(&_ssl_conf);
     mbedtls_x509_crt_free(& _cacert );
-    
+    mbedtls_ssl_free(&_ssl);
 
-   
 
-     mbedtls_ssl_free(&_ssl);
+
     
     
 }
@@ -431,11 +432,11 @@ int SSLAdapter::handshake()
         {
             char vrfy_buf[512];
 
-            //mbedtls_printf( " failed\n" );
+            mbedtls_printf( " failed\n" );
 
-        //    mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
+             mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
 
-           //  SError << " Failed ssl cert verification " << vrfy_buf;
+             SError << " Failed ssl cert verification " << vrfy_buf;
         }
 
 
@@ -508,6 +509,7 @@ int SSLAdapter::tls_err_hdlr( const int err_code)
         case 0: {
             return 0;
         }
+        
         default: {
             char buf[512];
             SError <<   getTLSError(err_code);
@@ -535,6 +537,10 @@ void SSLAdapter::stay_uptodate( )
         assert( rv == pending );
 
         _socket->Write( mybuf, rv, cb);
+        
+        SInfo << "stay_uptodate "  <<  rv ;
+        
+        
         assert(rv == pending);
 
         free(mybuf);

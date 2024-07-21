@@ -1,5 +1,7 @@
-#include "bio.h"
+#include "net/bio.h"
 #include <cstring>
+
+#include <iostream>
 
 /* Return the number of pending bytes in read and write buffers */
 size_t BIO_ctrl_pending(BIO *bio) {
@@ -244,6 +246,8 @@ int BIO_read(BIO *bio, const char *buf, size_t size) {
     int   sz;
     char* pt;
 
+    std::cout << " BIO_read " <<  size << std::endl << std::flush;
+    
     sz = BIO_nread(bio, &pt, size);
 
     if (sz > 0) {
@@ -254,6 +258,9 @@ int BIO_read(BIO *bio, const char *buf, size_t size) {
 }
 
 int BIO_write(BIO *bio, const char *buf, size_t size) {
+    
+    std::cout << " BIO_write " <<  size << std::endl << std::flush;
+     
     /* internal function where arguments have already been sanity checked */
     int   sz;
     char* data;
@@ -316,6 +323,8 @@ int BIO_free_all(BIO* bio)
 
 int BIO_net_send( void *ctx, const unsigned char *buf, size_t len ) {
     BIO *bio = (BIO*)ctx;
+    
+    std::cout << " BIO_net_send " <<  len << std::endl << std::flush;
 
     int sz;
     sz = BIO_write(bio, (const char *)buf, len);
@@ -327,6 +336,8 @@ int BIO_net_send( void *ctx, const unsigned char *buf, size_t len ) {
 
 int BIO_net_recv( void *ctx, unsigned char *buf, size_t len) {
     BIO *bio = (BIO*)ctx;
+
+     std::cout << " BIO_net_recv " <<  len << std::endl << std::flush;
 
     int   sz;
 
