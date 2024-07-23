@@ -69,7 +69,14 @@ void SslConnection::send(const char* data, size_t len)
 {
     SInfo << "Send " <<  data   << " len "  << len;
     
-     size_t rv = (size_t)mbedtls_ssl_write( &_sslAdapter._ssl,(const unsigned char *) data, len);
+    if (len > MBEDTLS_SSL_MAX_CONTENT_LEN)
+    {
+        SError <<  "encode data is too large" ;
+        return;
+    }
+
+
+    size_t rv = (size_t)mbedtls_ssl_write( &_sslAdapter._ssl,(const unsigned char *) data, len);
 
     size_t pending = 0;
     
@@ -83,43 +90,18 @@ void SslConnection::send(const char* data, size_t len)
 
         rv = BIO_read(_sslAdapter.app_bio_, encoded_data , pending);
        // data2encode->len = rv;
-       assert(rv == len);
+        //assert(rv == len);
         Write(  encoded_data, rv , _sslAdapter.cb);
         _sslAdapter.cb = nullptr;
         free(encoded_data);
     }
+    else
+    {
+        SError <<  "SSL Error Encoding" ;
+    }
     //return encoded_data;
     
-    
-    
-   // int ret;
-    
-//    do
-//    {
-//        
-//        ret = mbedtls_ssl_read( &_sslAdapter._ssl, (unsigned char*) data, len );
-//
-//        if( ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE )
-//            continue;
-//
-//        if( ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY )
-//            break;
-//
-//        if( ret < 0 )
-//        {
-//            SError <<  "failed\n  ! mbedtls_ssl_read returned "  <<  ret;
-//            break;
-//        }
-//
-//        if( ret == 0 )
-//        {
-//         
-//            break;
-//        }
-//
-//     
-//    }
-//    while( 1 );
+
     
     return ;
 }
@@ -140,10 +122,9 @@ void SslConnection::on_tls_read(const char* data, size_t len)
     SInfo << "on_tls_read: " << len << " data"  <<  data ; 
 
     
-    
-    
     BIO_write( _sslAdapter.app_bio_,data , len);
-    
+
+   
     _sslAdapter.addIncomingData(data, len);
     
     

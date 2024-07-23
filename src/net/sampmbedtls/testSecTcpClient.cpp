@@ -29,8 +29,8 @@ public:
 
     tesTcpClient(): SslConnection()
     {
-        //Connect("127.0.0.1", 5001);
-        Connect("127.0.0.1", 1234);
+        Connect("127.0.0.1", 5001);
+       // Connect("127.0.0.1", 1234);
     }
 
 
@@ -64,7 +64,14 @@ public:
 
     }
     
-  
+     void on_tls_connect() {
+        
+       std::string send = "Hello world2!\n";
+       SslConnection::send((const char*) send.c_str(), send.size());
+       std::cout << "TCP Client send data: " << send << "len: " << strlen((const char*) send.c_str()) << std::endl << std::flush;
+       
+    }
+    
 
 };
 
@@ -78,9 +85,6 @@ int main(int argc, char** argv) {
         tesTcpClient socket;
 
         app.run();
-
-        
-
 
 
 

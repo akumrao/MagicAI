@@ -132,7 +132,7 @@ SSLAdapter::SSLAdapter(SslConnection *socket)
     
     ssl_bio_ = 0;
     app_bio_ = 0;
-    oprn_state = STATE_INIT;
+//    oprn_state = STATE_INIT;
     
 }
 
@@ -201,7 +201,7 @@ void SSLAdapter::initClient()
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if FROMFILE
 
-    std::string CertFile = "/mnt/key/ca-cer.pem";
+    std::string CertFile = "/mnt/key/certificate.crt";
   
     mbedtls_x509_crt cacert;
 
@@ -256,9 +256,9 @@ void SSLAdapter::initClient()
      
 
  
-          mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
+         mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
         #if UNSAFE
-        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_OPTIONAL); //MBEDTLS_SSL_VERIFY_OPTIONAL);
+        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_NONE); //MBEDTLS_SSL_VERIFY_OPTIONAL);
         #endif
          mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg); 
       
@@ -381,6 +381,36 @@ void SSLAdapter::shutdown()
 
 int SSLAdapter::handshake()
 {
+    
+
+  if (handshake_state == STATE_HANDSHAKE_DONE) {
+    return STATE_HANDSHAKE_DONE;
+  }
+  handshake_state = STATE_HANDSHAKING;
+
+  int rv = 0;
+  rv = mbedtls_ssl_handshake(&_ssl); 
+  rv = swrap_error_handler( rv);
+  if (rv == 0) {
+    handshake_state = STATE_HANDSHAKE_DONE;
+
+    int verify_status = (int)mbedtls_ssl_get_verify_result(&_ssl);
+    if (verify_status) {
+      char buf[512];
+      mbedtls_x509_crt_verify_info(buf, sizeof(buf), "::", (uint32_t)verify_status);
+      //mbedtls_printf("%s\n", buf);
+       SError << " Failed ssl cert verification " << buf;
+    }
+    
+    _socket->on_tls_connect();
+
+    // notify to the JS layer "onhandshakedone".
+   // jerry_value_t fn = iotjs_jval_get_property(jthis, "onhandshakedone");
+
+  }
+  return handshake_state;
+    
+    
 //    int ret = 0;
 //    
 //    while( ( ret = mbedtls_ssl_handshake( &_ssl ) ) != 0 )
@@ -412,40 +442,40 @@ int SSLAdapter::handshake()
 //         SError << " Failed ssl cert verification " << vrfy_buf;
 //
 //    }
-   if( oprn_state & STATE_IO) 
-   {
-        return 1;
-   }
-    int rv = 0, ssl_error;
-    rv = mbedtls_ssl_handshake(&_ssl);
-    
-    rv = tls_err_hdlr(rv);
-
-    oprn_state = STATE_HANDSHAKING;
-
-    if(rv == 0) 
-    {
-        oprn_state = STATE_IO;
-        int status = mbedtls_ssl_get_verify_result(&_ssl);
-
-        if (status) 
-        {
-            char vrfy_buf[512];
-
-            mbedtls_printf( " failed\n" );
-
-             mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
-
-             SError << " Failed ssl cert verification " << vrfy_buf;
-        }
-
-
-//        if(tls->on_tls_connect) {
-//            assert(tls->con_req);
-//            tls->on_tls_connect(tls->con_req, status);
+//   if( oprn_state & STATE_IO) 
+//   {
+//        return 1;
+//   }
+//    int rv = 0, ssl_error;
+//    rv = mbedtls_ssl_handshake(&_ssl);
+//    
+//    rv = tls_err_hdlr(rv);
+//
+//    oprn_state = STATE_HANDSHAKING;
+//
+//    if(rv == 0) 
+//    {
+//        oprn_state = STATE_IO;
+//        int status = mbedtls_ssl_get_verify_result(&_ssl);
+//
+//        if (status) 
+//        {
+//            char vrfy_buf[512];
+//
+//            mbedtls_printf( " failed\n" );
+//
+//             mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
+//
+//             SError << " Failed ssl cert verification " << vrfy_buf;
 //        }
-    }
-    return 0;
+//
+//
+////        if(tls->on_tls_connect) {
+////            assert(tls->con_req);
+////            tls->on_tls_connect(tls->con_req, status);
+////        }
+//    }
+//    return 0;
     
 }
 
@@ -476,47 +506,56 @@ std::string SSLAdapter::getTLSError(int err)  {
 void SSLAdapter::addIncomingData(const char *data, size_t len)
 {
    
-    if( 1 != handshake()) {
-        //recheck if handshake is complete now
-        return ;//STATE_HANDSHAKING;
-    }
-//
-//    //clean the slate
-    memset((void*) data, 0, len);
-    int rv = mbedtls_ssl_read(&_ssl, (unsigned char *)data, len);
-    tls_err_hdlr( rv);
+    
+    if( handshake_state == STATE_HANDSHAKING)
+    {    handshake();
+        return;
+    }    
 
-   // dcrypted->len = (size_t) rv;
-    assert( rv ==  len);
-    _socket->on_read(data,  rv) ;  //
-     
-//    if( tls->rd_cb) {
-//        tls->rd_cb(tls, rv, dcrypted);
-//    }
-//    return rv;
+
+    while (true)
+    {
+    
+        memset((void*) data, 0, len);
+    
+        int rv = -1;
+        rv = mbedtls_ssl_read(&_ssl, (unsigned char *)data, len);
+        rv =swrap_error_handler( rv);
+
+        if (rv > 0) {
+
+            _socket->on_read(data,  rv) ; 
+
+        } else if (rv == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+         // jerry_value_t fn = iotjs_jval_get_property(jthis, "onclose");
+            SInfo << "MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY";
+          break;
+        } else if (rv == MBEDTLS_ERR_SSL_WANT_READ ||
+                   rv == MBEDTLS_ERR_SSL_WANT_WRITE) {
+          break;
+        } else {
+            SError << getTLSError(rv);
+          break;
+        }
+   }
    
 }
 
 //handle only non fatal error currently
-int SSLAdapter::tls_err_hdlr( const int err_code)
+int SSLAdapter::swrap_error_handler( const int code)
 {
-    switch(err_code) {
-        case MBEDTLS_ERR_SSL_WANT_WRITE:
-        case MBEDTLS_ERR_SSL_WANT_READ: {
-            stay_uptodate();
-            break;
-        }
-        case 0: {
-            return 0;
-        }
-        
-        default: {
-            char buf[512];
-            SError <<   getTLSError(err_code);
-            return err_code;
-        }
+    
+    
+    if (code == MBEDTLS_ERR_SSL_WANT_WRITE || code == MBEDTLS_ERR_SSL_WANT_READ) {
+        stay_uptodate();
+    } 
+    else if (code == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+        return code;
     }
-    return err_code;
+    
+    
+    return code;
+    
 }
 
 
@@ -541,12 +580,27 @@ void SSLAdapter::stay_uptodate( )
         SInfo << "stay_uptodate "  <<  rv ;
         
         
-        assert(rv == pending);
+        //assert(rv == pending);
 
         free(mybuf);
         mybuf = 0;
     }
-}
+    
+    
+    
+
+  }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 

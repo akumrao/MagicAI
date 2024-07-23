@@ -1,37 +1,37 @@
-#include "net/bio.h"
 #include <cstring>
+//#include <iostream>
 
-#include <iostream>
+#include "net/bio.h"
+//#include "strings.h"
+#include "stdlib.h"
 
 /* Return the number of pending bytes in read and write buffers */
-size_t BIO_ctrl_pending(BIO *bio) {
+size_t BIO_ctrl_pending(BIO* bio) {
     if (bio == NULL) {
         return 0;
     }
 
     if (bio->type == BIO_MEMORY) {
-        return bio->memLen;
+        return (size_t)bio->memLen;
     }
 
     /* type BIO_BIO then check paired buffer */
     if (bio->type == BIO_BIO && bio->pair != NULL) {
-        BIO *pair = bio->pair;
+        BIO* pair = bio->pair;
+
         if (pair->wrIdx > 0 && pair->wrIdx <= pair->rdIdx) {
             /* in wrap around state where begining of buffer is being
              * overwritten */
-            return pair->wrSz - pair->rdIdx + pair->wrIdx;
+            return (size_t)(pair->wrSz - pair->rdIdx + pair->wrIdx);
         } else {
             /* simple case where has not wrapped around */
-            return pair->wrIdx - pair->rdIdx;
+            return (size_t)(pair->wrIdx - pair->rdIdx);
         }
     }
-
     return 0;
 }
 
-
-
-int BIO_set_write_buf_size(BIO *bio, long size) {
+int BIO_set_write_buf_size(BIO* bio, long size) {
     if (bio == NULL || bio->type != BIO_BIO || size < 0) {
         return SSL_FAILURE;
     }
@@ -41,7 +41,7 @@ int BIO_set_write_buf_size(BIO *bio, long size) {
         return SSL_FAILURE;
     }
 
-    bio->wrSz = (int) size;
+    bio->wrSz = (int)size;
     if (bio->wrSz < 0) {
         return SSL_FAILURE;
     }
@@ -50,7 +50,7 @@ int BIO_set_write_buf_size(BIO *bio, long size) {
         free(bio->mem);
     }
 
-    bio->mem = (BYTE *) malloc(bio->wrSz);
+    bio->mem = (BYTE*)malloc((size_t)bio->wrSz);
     if (bio->mem == NULL) {
         return SSL_FAILURE;
     }
@@ -60,28 +60,29 @@ int BIO_set_write_buf_size(BIO *bio, long size) {
     return SSL_SUCCESS;
 }
 
-
 /* Joins two BIO_BIO types. The write of b1 goes to the read of b2 and vise
  * versa. Creating something similar to a two way pipe.
  * Reading and writing between the two BIOs is not thread safe, they are
  * expected to be used by the same thread. */
-int BIO_make_bio_pair(BIO *b1, BIO *b2) {
+int BIO_make_bio_pair(BIO* b1, BIO* b2) {
     if (b1 == NULL || b2 == NULL) {
         return SSL_FAILURE;
     }
 
     /* both are expected to be of type BIO and not already paired */
-    if (b1->type != BIO_BIO || b2->type != BIO_BIO ||
-        b1->pair != NULL || b2->pair != NULL) {
+    if (b1->type != BIO_BIO || b2->type != BIO_BIO || b1->pair != NULL ||
+        b2->pair != NULL) {
         return SSL_FAILURE;
     }
 
     /* set default write size if not already set */
-    if (b1->mem == NULL && BIO_set_write_buf_size(b1, SSL_BIO_SIZE) != SSL_SUCCESS) {
+    if (b1->mem == NULL &&
+        BIO_set_write_buf_size(b1, SSL_BIO_SIZE) != SSL_SUCCESS) {
         return SSL_FAILURE;
     }
 
-    if (b2->mem == NULL && BIO_set_write_buf_size(b2, SSL_BIO_SIZE) != SSL_SUCCESS) {
+    if (b2->mem == NULL &&
+        BIO_set_write_buf_size(b2, SSL_BIO_SIZE) != SSL_SUCCESS) {
         return SSL_FAILURE;
     }
 
@@ -91,32 +92,29 @@ int BIO_make_bio_pair(BIO *b1, BIO *b2) {
     return SSL_SUCCESS;
 }
 
-
 /* Does not advance read index pointer */
-int BIO_nread0(BIO *bio, char **buf) {
+int BIO_nread0(BIO* bio, char** buf) {
     if (bio == NULL || buf == NULL) {
         return 0;
     }
 
     /* if paired read from pair */
     if (bio->pair != NULL) {
-        BIO *pair = bio->pair;
+        BIO* pair = bio->pair;
 
         /* case where have wrapped around write buffer */
-        *buf = (char *) pair->mem + pair->rdIdx;
+        *buf = (char*)pair->mem + pair->rdIdx;
         if (pair->wrIdx > 0 && pair->rdIdx >= pair->wrIdx) {
             return pair->wrSz - pair->rdIdx;
         } else {
             return pair->wrIdx - pair->rdIdx;
         }
     }
-
     return 0;
 }
 
-
 /* similar to SSL_BIO_nread0 but advances the read index */
-int BIO_nread(BIO *bio, char **buf, size_t num) {
+int BIO_nread(BIO* bio, char** buf, size_t num) {
     int sz = SSL_BIO_UNSET;
 
     if (bio == NULL || buf == NULL) {
@@ -126,7 +124,7 @@ int BIO_nread(BIO *bio, char **buf, size_t num) {
     if (bio->pair != NULL) {
         /* special case if asking to read 0 bytes */
         if (num == 0) {
-            *buf = (char *) bio->pair->mem + bio->pair->rdIdx;
+            *buf = (char*)bio->pair->mem + bio->pair->rdIdx;
             return 0;
         }
 
@@ -136,8 +134,8 @@ int BIO_nread(BIO *bio, char **buf, size_t num) {
             return SSL_BIO_ERROR;
         }
 
-        if (num < sz) {
-            sz = num;
+        if ((int)num < sz) {
+            sz = (int)num;
         }
         bio->pair->rdIdx += sz;
 
@@ -159,8 +157,7 @@ int BIO_nread(BIO *bio, char **buf, size_t num) {
     return sz;
 }
 
-
-int BIO_nwrite(BIO *bio, char **buf, int num) {
+int BIO_nwrite(BIO* bio, char** buf, int num) {
     int sz = SSL_BIO_UNSET;
 
     if (bio == NULL || buf == NULL) {
@@ -169,7 +166,7 @@ int BIO_nwrite(BIO *bio, char **buf, int num) {
 
     if (bio->pair != NULL) {
         if (num == 0) {
-            *buf = (char *) bio->mem + bio->wrIdx;
+            *buf = (char*)bio->mem + bio->wrIdx;
             return 0;
         }
 
@@ -205,7 +202,7 @@ int BIO_nwrite(BIO *bio, char **buf, int num) {
         if (num < sz) {
             sz = num;
         }
-        *buf = (char *) bio->mem + bio->wrIdx;
+        *buf = (char*)bio->mem + bio->wrIdx;
         bio->wrIdx += sz;
 
         /* if at the end of the buffer and space for wrap around then set
@@ -218,10 +215,8 @@ int BIO_nwrite(BIO *bio, char **buf, int num) {
     return sz;
 }
 
-
 /* Reset BIO to initial state */
-int BIO_reset(BIO *bio) {
-
+int BIO_reset(BIO* bio) {
     if (bio == NULL) {
         /* -1 is consistent failure even for FILE type */
         return SSL_BIO_ERROR;
@@ -241,42 +236,39 @@ int BIO_reset(BIO *bio) {
     return SSL_BIO_ERROR;
 }
 
+int BIO_read(BIO* bio, const char* buf, size_t size) {
+    int sz;
+    char *pt;
 
-int BIO_read(BIO *bio, const char *buf, size_t size) {
-    int   sz;
-    char* pt;
+  //  std::cout << " BIO_read " << size << std::endl << std::flush;
 
-    std::cout << " BIO_read " <<  size << std::endl << std::flush;
-    
     sz = BIO_nread(bio, &pt, size);
 
     if (sz > 0) {
-        memcpy((void*)buf, pt, sz);
+        memset((void*)buf, 0, (size_t)sz);
+        memcpy((void*)buf, pt, (size_t)sz);
     }
 
     return sz;
 }
 
-int BIO_write(BIO *bio, const char *buf, size_t size) {
-    
-    std::cout << " BIO_write " <<  size << std::endl << std::flush;
-     
+int BIO_write(BIO* bio, const char* buf, size_t size) {
     /* internal function where arguments have already been sanity checked */
-    int   sz;
+//    std::cout << " BIO_write " << size << std::endl << std::flush;
+    int sz;
     char* data;
 
-    sz = BIO_nwrite(bio, &data, size);
+    sz = BIO_nwrite(bio, &data, (int)size);
 
     /* test space for write */
     if (sz <= 0) {
         return sz;
     }
 
-    memcpy(data, buf, sz);
-
+    memset(data, 0, (size_t)sz);
+    memcpy(data, buf, (size_t)sz);
     return sz;
 }
-
 
 /**
  * support bio type only
@@ -284,8 +276,8 @@ int BIO_write(BIO *bio, const char *buf, size_t size) {
  * @param type
  * @return
  */
-BIO *SSL_BIO_new(int type) {
-    BIO *bio = (BIO *) malloc(sizeof(BIO));
+BIO* SSL_BIO_new(int type) {
+    BIO* bio = (BIO*)malloc(sizeof(BIO));
     if (bio) {
         bzero(bio, sizeof(BIO));
         bio->type = type;
@@ -296,8 +288,7 @@ BIO *SSL_BIO_new(int type) {
     return bio;
 }
 
-int BIO_free(BIO* bio)
-{
+int BIO_free(BIO* bio) {
     /* unchain?, doesn't matter in goahead since from free all */
     if (bio) {
         /* remove from pair by setting the paired bios pair to NULL */
@@ -310,9 +301,7 @@ int BIO_free(BIO* bio)
     return 0;
 }
 
-
-int BIO_free_all(BIO* bio)
-{
+int BIO_free_all(BIO* bio) {
     while (bio) {
         BIO* next = bio->next;
         BIO_free(bio);
@@ -321,27 +310,26 @@ int BIO_free_all(BIO* bio)
     return 0;
 }
 
-int BIO_net_send( void *ctx, const unsigned char *buf, size_t len ) {
-    BIO *bio = (BIO*)ctx;
-    
-    std::cout << " BIO_net_send " <<  len << std::endl << std::flush;
+int BIO_net_send(void* ctx, const unsigned char* buf, size_t len) {
+    BIO* bio = (BIO*)ctx;
+
+   // std::cout << " BIO_net_send " << len << std::endl << std::flush;
 
     int sz;
-    sz = BIO_write(bio, (const char *)buf, len);
+    sz = BIO_write(bio, (const char*)buf, len);
     if (sz <= 0) {
         return MBEDTLS_ERR_SSL_WANT_WRITE;
     }
     return sz;
 }
 
-int BIO_net_recv( void *ctx, unsigned char *buf, size_t len) {
-    BIO *bio = (BIO*)ctx;
+int BIO_net_recv(void* ctx, unsigned char* buf, size_t len) {
+   
+//    std::cout << " BIO_net_recv " << len << std::endl << std::flush;
 
-     std::cout << " BIO_net_recv " <<  len << std::endl << std::flush;
-
-    int   sz;
-
-    sz = BIO_read(bio, (const char *)buf, len);
+    BIO* bio = (BIO*)ctx;
+    int sz;
+    sz = BIO_read(bio, (const char*)buf, len);
 
     if (sz <= 0) {
         return MBEDTLS_ERR_SSL_WANT_READ;

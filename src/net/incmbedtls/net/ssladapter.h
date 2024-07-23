@@ -119,7 +119,7 @@ public:
     std::string getTLSError(int );
 
     void stay_uptodate( );
-    int tls_err_hdlr( const int err_code);
+    int swrap_error_handler( const int err_code);
     
     void addIncomingData(const char *data, size_t len);
     
@@ -139,16 +139,18 @@ protected:
  BIO     *app_bio_; //Our BIO, All IO should be through this
  BIO     *ssl_bio_; //the ssl BIO used only by openSSL
 
-int      oprn_state;
+
 
 
 enum uv_tls_state {
     STATE_INIT         = 0x0
     ,STATE_HANDSHAKING = 0x1
-    ,STATE_IO          = 0x2 //read or write mode
+    ,STATE_HANDSHAKE_DONE  = 0x2 //read or write mode
     ,STATE_CLOSING     = 0x4 // This means closed state also
 };
 
+
+int  handshake_state{STATE_INIT};
     
 protected:
     friend class SslConnection;
