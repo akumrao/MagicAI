@@ -226,22 +226,21 @@ void SSLAdapter::initSSL()
         
           
     
-        mbedtls_ssl_conf_max_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-        mbedtls_ssl_conf_min_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
+        //mbedtls_ssl_conf_max_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+        //mbedtls_ssl_conf_min_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
    // }
      
+    
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if FROMFILE
 
     std::string CertFile = "/mnt/key/certificate.crt";
   
-    mbedtls_x509_crt cacert;
 
-    mbedtls_x509_crt_init( &cacert );
     
     int ret = 0;
 
-    if( ( ret = mbedtls_x509_crt_parse_file( &cacert, CertFile.c_str() ) ) != 0 )
+    if( ( ret = mbedtls_x509_crt_parse_file( &_cacert, CertFile.c_str() ) ) != 0 )
     {
         //mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
         //goto exit;
@@ -276,17 +275,36 @@ void SSLAdapter::initSSL()
     
 #else
 
- if (           mbedtls_x509_crt_parse(&_cacert, (const unsigned char *) SSL_CA_PEM,
-                    sizeof (SSL_CA_PEM)) != 0 ||
-                mbedtls_ssl_config_defaults(&_ssl_conf,
-                    MBEDTLS_SSL_IS_CLIENT,
-                    MBEDTLS_SSL_TRANSPORT_STREAM,
-                    MBEDTLS_SSL_PRESET_DEFAULT) != 0) {
-            _error = true;
-            return;
-        }
+    
+    
+    int ret = mbedtls_x509_crt_parse( &_cacert, (const unsigned char *) mbedtls_test_srv_crt,
+                          mbedtls_test_srv_crt_len );
+    if( ret != 0 )
+    {
+        SError << "mbedtls_x509_crt_parse returned " << ret ;
+        exit(0);
+    }
 
-      
+    ret = mbedtls_x509_crt_parse( &_cacert, (const unsigned char *) mbedtls_test_cas_pem,
+                          mbedtls_test_cas_pem_len );
+    if( ret != 0 )
+    {
+        SError << "mbedtls_x509_crt_parse returned " << ret ;
+        exit(0);
+    }
+
+    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
+                         mbedtls_test_srv_key_len, NULL, 0 );
+    if( ret != 0 )
+    {
+         SError << "mbedtls_x509_crt_parse returned " << ret ;
+         exit(0);
+    }
+    
+    
+    
+    
+    
 
 
 #endif
@@ -304,7 +322,7 @@ void SSLAdapter::initSSL()
         }
          
         #if UNSAFE
-        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_NONE); //MBEDTLS_SSL_VERIFY_OPTIONAL);
+        mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_OPTIONAL ); //MBEDTLS_SSL_VERIFY_OPTIONAL); MBEDTLS_SSL_VERIFY_NONE
         #endif
          mbedtls_ssl_conf_rng(&_ssl_conf, mbedtls_ctr_drbg_random, &_ctr_drbg); 
       
