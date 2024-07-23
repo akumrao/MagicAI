@@ -29,7 +29,7 @@ SslConnection::SslConnection()
   
 {
     LTrace("Create")
-     _sslAdapter.initClient();
+     _sslAdapter.initSSL();
  
 }
 
@@ -41,7 +41,8 @@ SslConnection::SslConnection( bool server)
     ,serverMode(server)
 {
     if(server)
-        _sslAdapter.initServer();
+        _sslAdapter.server = server;
+        _sslAdapter.initSSL();
     LTrace("Create")
 }
 

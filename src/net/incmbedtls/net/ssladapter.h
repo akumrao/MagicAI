@@ -93,10 +93,10 @@ public:
     ~SSLAdapter();
 
     /// Initializes the SSL context as a client.
-    void initClient();
+    void initSSL();
 
     /// Initializes the SSL context as a server.
-    void initServer();
+    //void initServer();
 
     /// Returns true when SSL context has been initialized.
    // bool initialized() const;
@@ -130,6 +130,8 @@ public:
     bool setup(const mbedtls_ssl_config *conf, const char *hostname);
     
     onSendCallback  cb{nullptr};
+    
+    bool server{false};
 
 protected:
     
@@ -171,6 +173,9 @@ protected:
     mbedtls_ctr_drbg_context _ctr_drbg;
     mbedtls_x509_crt _cacert;
     mbedtls_ssl_config _ssl_conf;
+    
+    
+    mbedtls_pk_context pkey;
     
 };
 

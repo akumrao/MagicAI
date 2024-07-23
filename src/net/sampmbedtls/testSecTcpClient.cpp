@@ -43,7 +43,7 @@ public:
 
     void on_read( const char* data, size_t len) {
         
-      std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
+        std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
 
         std::cout << "data: " << data << " len: " << len << std::endl << std::flush;
         std::string send = "12345";
@@ -51,11 +51,10 @@ public:
 
     }
     
-    void on_connect() {
-        
-       SslConnection::on_connect();
-        
-       std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
+    void on_connect() 
+    {
+        SslConnection::on_connect();
+        std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
 
      
 //       std::string send = "12345";

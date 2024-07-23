@@ -150,7 +150,7 @@ SSLAdapter::~SSLAdapter()
 
 }
 
-void SSLAdapter::initClient()
+void SSLAdapter::initSSL()
 {
     mbedtls_ssl_init(&_ssl);
     
@@ -158,6 +158,13 @@ void SSLAdapter::initClient()
     mbedtls_ctr_drbg_init(&_ctr_drbg);
     mbedtls_x509_crt_init(&_cacert);
     mbedtls_ssl_config_init(&_ssl_conf);
+    
+    
+    if(server)
+    {
+       mbedtls_pk_init( &pkey );
+
+    }
         
     const char *DRBG_PERS = "mbed TLS helloword client";
     
@@ -185,13 +192,38 @@ void SSLAdapter::initClient()
 //        mbedtls_ssl_conf_min_version(&ssl_pm->conf, MBEDTLS_SSL_MAJOR_VERSION_3, version);
 //    } else {
     
-         if( mbedtls_ssl_config_defaults(&_ssl_conf,
+    
+    if(server)
+    { 
+       
+        if( ( mbedtls_ssl_config_defaults( &_ssl_conf,
+                    MBEDTLS_SSL_IS_SERVER,
+                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                    MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
+        {
+             SError << "mbedtls_ssl_config_defaults failed";
+             exit(0);
+        }
+        
+ 
+    }
+    else
+    {
+         
+        if( mbedtls_ssl_config_defaults(&_ssl_conf,
                     MBEDTLS_SSL_IS_CLIENT,
                     MBEDTLS_SSL_TRANSPORT_STREAM,
                     MBEDTLS_SSL_PRESET_DEFAULT) != 0) 
         {
           SError << "mbedtls_ssl_config_defaults failed";
+          exit(0);
         }
+               
+        
+    }
+    
+    
+        
           
     
         mbedtls_ssl_conf_max_version(&_ssl_conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
@@ -219,11 +251,21 @@ void SSLAdapter::initClient()
     }
 
 
-// remove the following line
-// mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_NONE );
-   
     
-    
+    if(server)
+    {
+       const char * KeyFile = "/mnt/key/private_key.pem";
+       const char *pwd = "12345678";
+
+        ret =  mbedtls_pk_parse_keyfile( &pkey,  KeyFile ,pwd );
+        if( ret != 0 )
+        {
+             SError << "mbedtls_x509_crt_parse returned " << ret ;
+             exit(0);
+        }
+
+
+    }   
    
             
             
@@ -249,14 +291,18 @@ void SSLAdapter::initClient()
 
 #endif
 
-
-     
-
-
      
 
  
-         mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
+        mbedtls_ssl_conf_ca_chain(&_ssl_conf, &_cacert, NULL);
+        
+        if(server)
+        if( (  mbedtls_ssl_conf_own_cert( &_ssl_conf, &_cacert, &pkey ) ) != 0 )
+        {
+            SError << "failed\n  ! mbedtls_ssl_conf_own_cert returned ";
+            exit(0);
+        }
+         
         #if UNSAFE
         mbedtls_ssl_conf_authmode(&_ssl_conf, MBEDTLS_SSL_VERIFY_NONE); //MBEDTLS_SSL_VERIFY_OPTIONAL);
         #endif
@@ -268,7 +314,9 @@ void SSLAdapter::initClient()
           static const auto host = "127.0.0.1";
         setup(&_ssl_conf, host);
 
-
+        
+        if(server)
+            mbedtls_ssl_session_reset( &_ssl );
 
         
    #if DEBUG_LEVEL > 0
@@ -325,11 +373,11 @@ bool SSLAdapter::setup(const mbedtls_ssl_config *conf, const char *hostname)
 }
 
 
-void SSLAdapter::initServer()  //(SSL* ssl)
-{
-    LTrace("Init server")
-
-}
+//void SSLAdapter::initServer()  //(SSL* ssl)
+//{
+//    server =true;
+//
+//}
 
 void SSLAdapter::shutdown()
 {
@@ -350,6 +398,13 @@ void SSLAdapter::shutdown()
     mbedtls_entropy_free(&_entropy);
     mbedtls_ssl_config_free(&_ssl_conf);
     mbedtls_x509_crt_free(& _cacert );
+    
+    if(server)
+    {
+        mbedtls_pk_free( &pkey );
+    }
+        
+    
     mbedtls_ssl_free(&_ssl);
 
 
