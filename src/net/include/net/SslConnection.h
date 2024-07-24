@@ -106,6 +106,8 @@ public:
       void on_tls_read(const char* data, size_t len) override;
       void on_read(const char* data, size_t len)override;
 
+      virtual void on_tls_connect() {};
+
       bool serverMode={false};
 protected:
   //  net::SSLContext::Ptr _sslContext;
