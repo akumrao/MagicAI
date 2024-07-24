@@ -247,6 +247,8 @@ void SSLAdapter::initSSL()
         
         SError << "mbedtls_x509_crt_parse returned " << ret ;
         
+        
+          exit(0);
     }
 
 
@@ -329,8 +331,8 @@ void SSLAdapter::initSSL()
 
        // mbedtls_ssl_conf_own_cert(&_ssl_conf, &_cacert, NULL);
       
-          static const auto host = "127.0.0.1";
-        setup(&_ssl_conf, host);
+        //static const auto host = "127.0.0.1";
+        setup(&_ssl_conf, nullptr);
 
         
         if(server)
@@ -650,7 +652,7 @@ void SSLAdapter::stay_uptodate( )
 
         _socket->Write( mybuf, rv, cb);
         
-        SInfo << "stay_uptodate "  <<  rv ;
+        //SInfo << "stay_uptodate "  <<  rv ;
         
         
         //assert(rv == pending);

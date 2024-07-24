@@ -29,7 +29,7 @@ public:
          
      }
     
-    void on_wsread(Listener* connection, const char* msg, size_t len) {
+    void on_read(Listener* connection, const char* msg, size_t len) {
       
         //connection->send("arvind", 6 );
         SInfo << "msg " << std::string(msg,len);
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
    StreamingResponderFactory *stream =   new StreamingResponderFactory();
             
    Application app;
-   testwebscoket  *socket = new testwebscoket("0.0.0.0", 8000, stream , false  );
+   testwebscoket  *socket = new testwebscoket("0.0.0.0", 1111, stream , false  );
     //socket.start();
 
    app.waitForShutdown([&](void*)

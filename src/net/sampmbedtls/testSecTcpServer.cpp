@@ -41,7 +41,7 @@ public:
 
     
     void on_read(const char* data, size_t len) {
-        std::cout << "TCP server send data: " << data << "len: " << len << std::endl << std::flush;
+        std::cout << "on_read  data: " << data << "len: " << len << std::endl << std::flush;
         std::string send = "12345";
         SslConnection::send((const char*) send.c_str(), 5);
 
