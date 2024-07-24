@@ -3,16 +3,16 @@ cmake_minimum_required(VERSION 3.7)
 
 if (${ANDROID_ABI} STREQUAL "x86_64")
 
-SET(SSL_ROOT "/workspace/MagicAI/src/openssl/buildx64")
-SET(SSL_LIB "/workspace/MagicAI/src/openssl/buildx64/lib")
+#SET(SSL_ROOT "/workspace/MagicAI/src/openssl/buildx64")
+#SET(SSL_LIB "/workspace/MagicAI/src/openssl/buildx64/lib")
 
 SET(WEBRTC_REPO "/workspace/MagicAI/src/broadcast/main/webrtc/src")
 
 
 else(${ANDROID_ABI} STREQUAL "mipsel")
  
-SET(SSL_ROOT "/workspace/MagicAI/src/openssl/buildt31")
-SET(SSL_LIB "/workspace/MagicAI/src/openssl/buildt31/lib")
+#SET(SSL_ROOT "/workspace/MagicAI/src/openssl/buildt31")
+#SET(SSL_LIB "/workspace/MagicAI/src/openssl/buildt31/lib")
 SET(T31SDK "/workspace/adappt/T31/ISVP-T31-1.1.6-20221229/software/Ingenic-SDK-T31-1.1.6-20221229/sdk/5.4.0")
 
 SET(WEBRTC_REPO "/workspace/MagicAI/src/broadcast/main/webrtc/src")
@@ -38,14 +38,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 
-
 if (${ANDROID_ABI} STREQUAL "x86_64")
 
-file(GLOB SOURCES "*.cpp" "../../libuv/src/*.cpp" "../../libuv/src/unix/*.cpp" "../src/*.cpp" "../src/x64/*.cpp" "../../base/src/*.cpp"  "../../net/src/*.cpp" "../../http/src/*.cpp" "../../http_parser/*.cpp" "../../facedetec/src/configuration.cpp" "../../signal/src/*.cpp" )
+file(GLOB SOURCES "*.cpp" "../../libuv/src/*.cpp" "../../libuv/src/unix/*.cpp" "../src/*.cpp" "../src/x64/*.cpp" "../../base/src/*.cpp"  "../../net/srcmbedtls/*.cpp" "../../http/src/*.cpp" "../../http_parser/*.cpp" "../../facedetec/src/configuration.cpp" "../../signal/src/*.cpp" )
 
 else(${ANDROID_ABI} STREQUAL "mipsel")
  
-file(GLOB SOURCES "*.cpp" "../../libuv/src/*.cpp" "../../libuv/src/unix/*.cpp" "../src/*.cpp" "../src/t31/*.cpp" "../../base/src/*.cpp"  "../../net/src/*.cpp" "../../http/src/*.cpp" "../../http_parser/*.cpp" "../../facedetec/src/*.cpp" "../../facedetec/src/t31/*.cpp" "../../signal/src/*.cpp")
+file(GLOB SOURCES "*.cpp" "../../libuv/src/*.cpp" "../../libuv/src/unix/*.cpp" "../src/*.cpp" "../src/t31/*.cpp" "../../base/src/*.cpp"  "../../net/srcmbedtls/*.cpp" "../../http/src/*.cpp" "../../http_parser/*.cpp" "../../facedetec/src/*.cpp" "../../facedetec/src/t31/*.cpp" "../../signal/src/*.cpp")
 
 endif()
 
@@ -73,11 +72,11 @@ set(INC "/workspace/MagicAI/src/qrcode/include")
 
 if (${ANDROID_ABI} STREQUAL "x86_64")
 
-target_include_directories(runWebrtc PRIVATE   ${INC} ../../signal/include ../../facedetec/include/ ${SSL_ROOT}/include  ../include  ../../http/include/ ../../base/include/ ../../net/include/ ../../libuv/include ../../libuv/src ../../../build/ ../../http_parser/ ../webrtc/include ../include/x64  )
+target_include_directories(runWebrtc PRIVATE   ${INC} ../../signal/include ../../facedetec/include/ ${SSL_ROOT}/include  ../include  ../../http/include/ ../../base/include/ ../../net/incmbedtls/ ../../libuv/include ../../libuv/src ../../../build/ ../../http_parser/ ../webrtc/include ../include/x64  )
 
 else(${ANDROID_ABI} STREQUAL "mipsel")
  
-target_include_directories(runWebrtc PRIVATE  ${INC} ../../signal/include ../../facedetec/include/ ../../facedetec/include/t31/  ${SSL_ROOT}/include  ../include  ../../http/include/ ../../base/include/ ../../net/include/ ../../libuv/include ../../libuv/src ../../../build/ ../../http_parser/ ../webrtc/include   ../include/x64    ../include/t31 ../../facedetec/xailient-sdk/include/ ${T31SDK}/include ${T31SDK}/samples/libimp-sample/)
+target_include_directories(runWebrtc PRIVATE  ${INC} ../../signal/include ../../facedetec/include/ ../../facedetec/include/t31/  ${SSL_ROOT}/include  ../include  ../../http/include/ ../../base/include/ ../../net/incmbedtls/ ../../libuv/include ../../libuv/src ../../../build/ ../../http_parser/ ../webrtc/include   ../include/x64    ../include/t31 ../../facedetec/xailient-sdk/include/ ${T31SDK}/include ${T31SDK}/samples/libimp-sample/)
 
 endif()
 
@@ -99,7 +98,7 @@ if (${ANDROID_ABI} STREQUAL "x86_64")
 
 target_link_libraries(runWebrtc PRIVATE  rnnoise
     srtp   usrsctp  event    absl::optional    absl::variant    absl::strings
-    pffft pthread m dl z  ${SSL_LIB}/libssl.a ${SSL_LIB}/libcrypto.a  )
+    pffft pthread m dl z   )
 
 else(${ANDROID_ABI} STREQUAL "mipsel")
  
@@ -108,19 +107,6 @@ target_link_libraries(runWebrtc PRIVATE  rnnoise
     pffft xailient-fi  rt m dl -pthread atomic  ${SSL_LIB}/libssl.a ${SSL_LIB}/libcrypto.a  ${T31SDK}/lib/uclibc/libalog.a ${T31SDK}/lib/uclibc/libimp.a  /workspace/MagicAI/src/qrcode/rgbQr/zbar.a)
 
 endif()
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
