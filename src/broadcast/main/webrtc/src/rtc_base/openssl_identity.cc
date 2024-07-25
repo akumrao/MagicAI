@@ -96,7 +96,7 @@ static EVP_PKEY* MakeKey(const KeyParams& key_params) {
 OpenSSLKeyPair* OpenSSLKeyPair::Generate(const KeyParams& key_params) {
   EVP_PKEY* pkey = MakeKey(key_params);
   if (!pkey) {
-    openssl::LogSSLErrors("Generating key pair");
+//    openssl::LogSSLErrors("Generating key pair");
     return nullptr;
   }
   return new OpenSSLKeyPair(pkey);
@@ -323,14 +323,14 @@ bool OpenSSLIdentity::ConfigureIdentity(SSL_CTX* ctx) {
   const OpenSSLCertificate* cert = &certificate();
   if (SSL_CTX_use_certificate(ctx, cert->x509()) != 1 ||
       SSL_CTX_use_PrivateKey(ctx, key_pair_->pkey()) != 1) {
-    openssl::LogSSLErrors("Configuring key and certificate");
+//    openssl::LogSSLErrors("Configuring key and certificate");
     return false;
   }
   // If a chain is available, use it.
   for (size_t i = 1; i < cert_chain_->GetSize(); ++i) {
     cert = static_cast<const OpenSSLCertificate*>(&cert_chain_->Get(i));
     if (SSL_CTX_add1_chain_cert(ctx, cert->x509()) != 1) {
-      openssl::LogSSLErrors("Configuring intermediate certificate");
+//      openssl::LogSSLErrors("Configuring intermediate certificate");
       return false;
     }
   }

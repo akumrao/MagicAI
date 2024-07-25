@@ -132,7 +132,7 @@ std::unique_ptr<OpenSSLCertificate> OpenSSLCertificate::Generate(
   }
   X509* x509 = MakeCertificate(key_pair->pkey(), actual_params);
   if (!x509) {
-    openssl::LogSSLErrors("Generating certificate");
+//    openssl::LogSSLErrors("Generating certificate");
     return nullptr;
   }
 #if !defined(NDEBUG)
