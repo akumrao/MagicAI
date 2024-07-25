@@ -140,10 +140,10 @@ SSLAdapter::~SSLAdapter()
 {
     
     if (app_bio_) {
-        BIO_free_all(app_bio_);
+        TLS_BIO_free_all(app_bio_);
     }
     if (ssl_bio_) {
-        BIO_free_all(ssl_bio_);
+        TLS_BIO_free_all(ssl_bio_);
     }
     
     LTrace("Destroy")
@@ -383,11 +383,11 @@ bool SSLAdapter::setup(const mbedtls_ssl_config *conf, const char *hostname)
     
     ssl_bio_ = SSL_BIO_new(BIO_BIO);
     app_bio_ = SSL_BIO_new(BIO_BIO);
-    BIO_make_bio_pair(ssl_bio_, app_bio_);
+    TLS_BIO_make_bio_pair(ssl_bio_, app_bio_);
 
     
 
-    mbedtls_ssl_set_bio(&_ssl, ssl_bio_, BIO_net_send, BIO_net_recv, NULL);
+    mbedtls_ssl_set_bio(&_ssl, ssl_bio_, TLS_BIO_net_send, TLS_BIO_net_recv, NULL);
 
     return true;
 }
@@ -556,12 +556,12 @@ void  SSLAdapter::addOutgoingData(const char* data, size_t len)
     char *encoded_data = nullptr;
 
 
-    if( (pending = BIO_ctrl_pending(app_bio_) ) > 0 ) {
+    if( (pending = TLS_BIO_ctrl_pending(app_bio_) ) > 0 ) {
 
         encoded_data = (char*)malloc(pending);
        // encoded_data.len = pending;
 
-        rv = BIO_read(app_bio_, encoded_data , pending);
+        rv = TLS_BIO_read(app_bio_, encoded_data , pending);
        // data2encode->len = rv;
         //assert(rv == len);
         _socket->Write(  encoded_data, rv , cb);
@@ -579,7 +579,7 @@ void  SSLAdapter::addOutgoingData(const char* data, size_t len)
 void SSLAdapter::addIncomingData(const char *data, size_t len)
 {
    
-     BIO_write( app_bio_,data , len);
+     TLS_BIO_write( app_bio_,data , len);
      
      
        
@@ -641,7 +641,7 @@ void SSLAdapter::stay_uptodate( )
 {
  
 
-    size_t pending = BIO_ctrl_pending(app_bio_);
+    size_t pending = TLS_BIO_ctrl_pending(app_bio_);
     if( pending > 0) {
 
         //Need to free the memory
@@ -649,7 +649,7 @@ void SSLAdapter::stay_uptodate( )
         
         mybuf = (char*)malloc(pending);
 
-        int rv = BIO_read(app_bio_, mybuf, pending);
+        int rv = TLS_BIO_read(app_bio_, mybuf, pending);
         assert( rv == pending );
 
         _socket->Write( mybuf, rv, cb);

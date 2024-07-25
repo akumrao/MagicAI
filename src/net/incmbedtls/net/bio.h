@@ -56,17 +56,17 @@ enum BIO_TYPE {
 };
 
 BIO* SSL_BIO_new(int type);
-int BIO_make_bio_pair(BIO* b1, BIO* b2);
+int TLS_BIO_make_bio_pair(BIO* b1, BIO* b2);
 
-size_t BIO_ctrl_pending(BIO* bio);
-int BIO_read(BIO* bio, const char* buf, size_t size);
-int BIO_write(BIO* bio, const char* buf, size_t size);
+size_t TLS_BIO_ctrl_pending(BIO* bio);
+int TLS_BIO_read(BIO* bio, const char* buf, size_t size);
+int TLS_BIO_write(BIO* bio, const char* buf, size_t size);
 
-int BIO_reset(BIO* bio);
-int BIO_net_recv(void* ctx, unsigned char* buf, size_t len);
-int BIO_net_send(void* ctx, const unsigned char* buf, size_t len);
-int BIO_free_all(BIO* bio);
-int BIO_free(BIO* bio);
+int TLS_BIO_reset(BIO* bio);
+int TLS_BIO_net_recv(void* ctx, unsigned char* buf, size_t len);
+int TLS_BIO_net_send(void* ctx, const unsigned char* buf, size_t len);
+int TLS_BIO_free_all(BIO* bio);
+int TLS_BIO_free(BIO* bio);
 
 
 
