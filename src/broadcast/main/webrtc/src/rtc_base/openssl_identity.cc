@@ -246,13 +246,10 @@ OpenSSLIdentity* OpenSSLIdentity::GenerateForTest(
 
 SSLIdentity* OpenSSLIdentity::FromPEMStrings(const std::string& private_key,
                                              const std::string& certificate) {
-  std::unique_ptr<OpenSSLCertificate> cert(
-      OpenSSLCertificate::FromPEMString(certificate));
-  if (!cert) {
-    RTC_LOG(LS_ERROR) << "Failed to create OpenSSLCertificate from PEM string.";
-    return nullptr;
-  }
 
+    
+     exit(0);
+     
   std::unique_ptr<OpenSSLKeyPair> key_pair(
       OpenSSLKeyPair::FromPrivateKeyPEMString(private_key));
   if (!key_pair) {
@@ -260,7 +257,7 @@ SSLIdentity* OpenSSLIdentity::FromPEMStrings(const std::string& private_key,
     return nullptr;
   }
 
-  return new OpenSSLIdentity(std::move(key_pair), std::move(cert));
+  return nullptr;
 }
 
 SSLIdentity* OpenSSLIdentity::FromPEMChainStrings(
@@ -285,7 +282,8 @@ SSLIdentity* OpenSSLIdentity::FromPEMChainStrings(
       BIO_free(bio);
       return nullptr;
     }
-    certs.emplace_back(new OpenSSLCertificate(x509));
+    exit(0);
+//    certs.emplace_back(new OpenSSLCertificate(x509));
     X509_free(x509);
   }
   BIO_free(bio);
@@ -347,8 +345,10 @@ std::string OpenSSLIdentity::PublicKeyToPEMString() const {
 }
 
 bool OpenSSLIdentity::operator==(const OpenSSLIdentity& other) const {
-  return *this->key_pair_ == *other.key_pair_ &&
-         this->certificate() == other.certificate();
+//  return *this->key_pair_ == *other.key_pair_ &&
+// this->certificate() == other.certificate();
+    exit(0);
+    int x = 0;
 }
 
 bool OpenSSLIdentity::operator!=(const OpenSSLIdentity& other) const {
