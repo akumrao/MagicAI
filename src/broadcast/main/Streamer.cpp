@@ -236,7 +236,7 @@ int main(int argc, char** argv) {
     // rtc::LogMessage::LogTimestamps();
     // rtc::LogMessage::LogThreads();
 
-    rtc::InitializeSSL();
+//    rtc::InitializeSSL();
 
 
     Application app;
@@ -284,7 +284,7 @@ int main(int argc, char** argv) {
 
     LTrace("app.run() is over")
     Settings::exit();         
-    rtc::CleanupSSL();
+//    rtc::CleanupSSL();
     Logger::destroy();
     
 //    if(ctx->txt)
