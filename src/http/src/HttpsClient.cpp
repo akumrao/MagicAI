@@ -173,11 +173,16 @@ namespace base {
         }
 
 
-        void HttpsClient::on_tls_connect() 
-        {
-            
-        
-        
+        //
+        // Socket Callbacks
+
+        void HttpsClient::on_connect() {
+            if (_active) return;
+            LTrace("On_connect")
+
+            SslConnection::on_connect();         
+            // Set the connection to active
+
             if(wsAdapter)
             {
                 wsAdapter->onSocketConnect();
@@ -238,18 +243,6 @@ namespace base {
             
             
             //LInfo("On socket recv: ", len , " : " , recvBytes, " : ", end_time- start_time );
-           
-        }
-
-        //
-        // Socket Callbacks
-
-        void HttpsClient::on_connect() {
-            if (_active) return;
-            LTrace("On_connect")
-
-            SslConnection::on_connect();         
-            // Set the connection to active
 
         }
         // Connection Callbacks

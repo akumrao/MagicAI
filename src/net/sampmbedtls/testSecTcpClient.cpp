@@ -57,18 +57,9 @@ public:
         std::cout << " on_read " << this->GetLocalIp() << " PeerIP " << this->GetPeerIp() << std::endl << std::flush;
 
      
-//       std::string send = "12345";
-//       SslConnection::send((const char*) send.c_str(), 5);
-//       std::cout << "TCP Client send data: " << send << "len: " << strlen((const char*) send.c_str()) << std::endl << std::flush;
-
-    }
-    
-     void on_tls_connect() {
-        
-       std::string send = "Hello world2!\n";
+      std::string send = "Hello world2!\n";
        SslConnection::send((const char*) send.c_str(), send.size());
        std::cout << "TCP Client send data: " << send << "len: " << strlen((const char*) send.c_str()) << std::endl << std::flush;
-       
     }
     
 

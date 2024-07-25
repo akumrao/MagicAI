@@ -356,8 +356,6 @@ void SSLAdapter::handshake()
 {
     int r = SSL_do_handshake(_ssl);
     if (r <= 0) handleError(r);
-
-     _socket->on_tls_connect();
 }
 
 void SSLAdapter::flush()

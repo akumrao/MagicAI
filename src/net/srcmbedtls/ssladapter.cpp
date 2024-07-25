@@ -477,7 +477,17 @@ int SSLAdapter::handshake()
        SError << " Failed ssl cert verification " << buf;
     }
     
-    _socket->on_tls_connect();
+    SInfo << "SSL Handshake over";
+    
+    if (_bufferOut.size() > 0)
+    {
+    
+        addOutgoingData( &_bufferOut[0],  _bufferOut.size());
+        _bufferOut.clear();
+    }
+    
+    
+  //  _socket->on_tls_connect();
 
     // notify to the JS layer "onhandshakedone".
    // jerry_value_t fn = iotjs_jval_get_property(jthis, "onhandshakedone");
@@ -486,80 +496,16 @@ int SSLAdapter::handshake()
   return handshake_state;
     
     
-//    int ret = 0;
-//    
-//    while( ( ret = mbedtls_ssl_handshake( &_ssl ) ) != 0 )
-//    {
-//        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
-//        {
-//
-//            SError << " failed\n  ! mbedtls_ssl_handshake returned "  << getTLSError(ret);
-//            return;
-//        }
-//    }
-//
-//
-//
-//    /*
-//     * 5. Verify the server certificate
-//     */
-//
-//    uint32_t flags;
-//    /* In real life, we probably want to bail out when ret != 0 */
-//    if( ( flags = mbedtls_ssl_get_verify_result( &_ssl ) ) != 0 )
-//    {
-//        char vrfy_buf[512];
-//
-//       
-//
-//        mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
-//        
-//         SError << " Failed ssl cert verification " << vrfy_buf;
-//
-//    }
-//   if( oprn_state & STATE_IO) 
-//   {
-//        return 1;
-//   }
-//    int rv = 0, ssl_error;
-//    rv = mbedtls_ssl_handshake(&_ssl);
-//    
-//    rv = tls_err_hdlr(rv);
-//
-//    oprn_state = STATE_HANDSHAKING;
-//
-//    if(rv == 0) 
-//    {
-//        oprn_state = STATE_IO;
-//        int status = mbedtls_ssl_get_verify_result(&_ssl);
-//
-//        if (status) 
-//        {
-//            char vrfy_buf[512];
-//
-//            mbedtls_printf( " failed\n" );
-//
-//             mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", status );
-//
-//             SError << " Failed ssl cert verification " << vrfy_buf;
-//        }
-//
-//
-////        if(tls->on_tls_connect) {
-////            assert(tls->con_req);
-////            tls->on_tls_connect(tls->con_req, status);
-////        }
-//    }
-//    return 0;
+
     
 }
 
 
 
-bool SSLAdapter::isConnected() const {
-
-   _ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER;
-}
+//bool SSLAdapter::isConnected() const {
+//
+//   _ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER;
+//}
 
 
 std::string SSLAdapter::getTLSError(int err)  {
@@ -578,14 +524,70 @@ std::string SSLAdapter::getTLSError(int err)  {
 */
 
 
+void  SSLAdapter::addOutgoingData(const char* data, size_t len)
+{
+
+        // SInfo << "Send " <<  data   << " len "  << len;
+
+    if (len > MBEDTLS_SSL_MAX_CONTENT_LEN) 
+    {
+        SError <<  "encode data is too large, change the values in config.h to increase the size" ;
+      //  return;
+    }
+
+    
+
+    if( handshake_state == STATE_HANDSHAKING )
+    {  // handshake();
+        std::copy(data, data + len, std::back_inserter(_bufferOut));
+        return;
+    }    
+    
+    size_t rv;
+    
+
+    rv = (size_t)mbedtls_ssl_write( &_ssl, (const unsigned char *) data,  len);
+    // if (r <= 0) { handleError(r); }  // we are not sure why Mbedtls does not handle error, though openssl does it 
+    // I have refered https://github.com/yodaos-project/ShadowNode.git
+    
+    
+    size_t pending = 0;
+
+    char *encoded_data = nullptr;
+
+
+    if( (pending = BIO_ctrl_pending(app_bio_) ) > 0 ) {
+
+        encoded_data = (char*)malloc(pending);
+       // encoded_data.len = pending;
+
+        rv = BIO_read(app_bio_, encoded_data , pending);
+       // data2encode->len = rv;
+        //assert(rv == len);
+        _socket->Write(  encoded_data, rv , cb);
+        cb = nullptr;
+        free(encoded_data);
+    }
+    else
+    {
+        SError <<  "SSL Error Encoding" ;
+    }
+
+}
+   
+
 void SSLAdapter::addIncomingData(const char *data, size_t len)
 {
    
-    
-    if( handshake_state == STATE_HANDSHAKING)
-    {    handshake();
+     BIO_write( app_bio_,data , len);
+     
+     
+       
+    if( handshake_state == STATE_HANDSHAKING )
+    {   handshake();
         return;
     }    
+ 
 
 
     while (true)
@@ -609,7 +611,7 @@ void SSLAdapter::addIncomingData(const char *data, size_t len)
                    rv == MBEDTLS_ERR_SSL_WANT_WRITE) {
           break;
         } else {
-            SError << getTLSError(rv);
+            //SError << getTLSError(rv);
           break;
         }
    }

@@ -114,7 +114,7 @@ public:
     void shutdown();
     
     
-    bool isConnected() const ;
+    //bool isConnected() const ;
 
     std::string getTLSError(int );
 
@@ -122,6 +122,7 @@ public:
     int swrap_error_handler( const int err_code);
     
     void addIncomingData(const char *data, size_t len);
+    void addOutgoingData(const char *data, size_t len);
     
     static void my_debug(void *ctx, int level, const char *file, int line,   const char *str);
     static int my_verify(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags);
@@ -160,7 +161,7 @@ protected:
     SslConnection* _socket;
      
     
-    //std::vector<char> _bufferOut; ///<  The outgoing payload to be encrypted and sent
+    std::vector<char> _bufferOut; ///<  The outgoing payload to be encrypted and sent
     
     
     

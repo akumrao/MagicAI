@@ -68,43 +68,8 @@ SslConnection::~SslConnection()
 
 void SslConnection::send(const char* data, size_t len)
 {
-    SInfo << "Send " <<  data   << " len "  << len;
-    
-    if (len > MBEDTLS_SSL_MAX_CONTENT_LEN)
-    {
-        SError <<  "encode data is too large" ;
-        return;
-    }
-
-
-    size_t rv = (size_t)mbedtls_ssl_write( &_sslAdapter._ssl,(const unsigned char *) data, len);
-
-    size_t pending = 0;
-    
-    char *encoded_data = nullptr;
-    
-    
-    if( (pending = BIO_ctrl_pending(_sslAdapter.app_bio_) ) > 0 ) {
-
-        encoded_data = (char*)malloc(pending);
-       // encoded_data.len = pending;
-
-        rv = BIO_read(_sslAdapter.app_bio_, encoded_data , pending);
-       // data2encode->len = rv;
-        //assert(rv == len);
-        Write(  encoded_data, rv , _sslAdapter.cb);
-        _sslAdapter.cb = nullptr;
-        free(encoded_data);
-    }
-    else
-    {
-        SError <<  "SSL Error Encoding" ;
-    }
-    //return encoded_data;
-    
-
-    
-    return ;
+   _sslAdapter.addOutgoingData( data, len);
+   return ;
 }
 
 
@@ -120,10 +85,7 @@ void SslConnection::tcpsend(const char* data, size_t len, onSendCallback _cb)
 
 void SslConnection::on_tls_read(const char* data, size_t len)
 {
-    SInfo << "on_tls_read: " << len ;
-
-    
-    BIO_write( _sslAdapter.app_bio_,data , len);
+   // SInfo << "on_tls_read: " << len ;
 
    
     _sslAdapter.addIncomingData(data, len);

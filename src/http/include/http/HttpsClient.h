@@ -52,8 +52,6 @@ namespace base {
             /* Pure virtual methods inherited from ::TcpHTTPConnection. */
         public:
             void on_read(const char* data, size_t len) override;
-            
-            void on_tls_connect();
 
             /*  /// HTTP Parser interface
               virtual void onParserHeader(const std::string& name, const std::string& value);
