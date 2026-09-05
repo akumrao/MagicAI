@@ -19,7 +19,7 @@
 #include "description.hpp"
 #include "reliability.h"
 #include "net/certificate.h"
-
+#include "TaskProcessor.h"
 
 
 //#include "track.h"
@@ -174,7 +174,7 @@ public:
 //	size_t bytesReceived();
 	//optional<std::chrono::milliseconds> rtt();
         
-        
+        TaskProcessor mProcessor;
         
 //        std::atomic<State> mState;
 //

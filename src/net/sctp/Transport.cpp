@@ -212,14 +212,14 @@ namespace rtc
 	{
 		 SInfo << "~Disconnected "  << sctptransport ; 
                  
-                 
-               if(sctptransport)
-               {
-                   //sctptransport->incoming(make_message(data, data + len));
-                   // TBD
-               }
-               else
-                 iceListener->OnClose(id);
+//                 
+//               if(sctptransport)
+//               {
+//                   //sctptransport->incoming(make_message(data, data + len));
+//                   // TBD
+//               }
+//               else
+//                 iceListener->OnClose(id);
      
      
      
@@ -240,6 +240,8 @@ namespace rtc
 //
 //			dataConsumer->TransportDisconnected();
 //		}
+                 
+                iceListener->OnClose(id);
 
 
 	}

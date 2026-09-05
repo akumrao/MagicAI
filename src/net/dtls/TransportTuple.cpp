@@ -61,7 +61,7 @@ namespace net
 	{
 		//MS_TRACE();
 
-		STrace << "<TransportTuple>";
+		SDebug << "<TransportTuple>";
 
 		int family;
 		std::string ip;
@@ -69,27 +69,27 @@ namespace net
 
 		base::net::IP::GetAddressInfo((struct sockaddr*)GetLocalAddress(), family, ip, port);
 
-		STrace << "  localIp    : " <<  ip;
+		SDebug << "  localIp    : " <<  ip;
 		
-                STrace << "  localPort  : " <<  port;
+                SDebug << "  localPort  : " <<  port;
 
 		base::net::IP::GetAddressInfo((struct sockaddr*)GetRemoteAddress(), family, ip, port);
 
-		STrace << "  remoteIp   :" << ip;
-		STrace << "  remotePort :" <<  port;
+		SDebug << "  remoteIp   :" << ip;
+		SDebug << "  remotePort :" <<  port;
 
 		switch (GetProtocol())
 		{
 			case Protocol::UDP:
-				STrace << "  protocol   : udp";
+				SDebug << "  protocol   : udp";
 				break;
 
 			case Protocol::TCP:
-				STrace << "  protocol   : tcp" ;
+				SDebug << "  protocol   : tcp" ;
 				break;
 		}
 
-		 STrace << "</TransportTuple>";
+		 SDebug << "</TransportTuple>";
 	}
 
 

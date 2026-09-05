@@ -75,7 +75,7 @@ public:
         void OnSctpState(std::string id, SctpTransport::State state);
         void OnSctpTransportMessageReceived(std::string id, SctpTransport* sctpAssociation ,message_ptr message );
         void OnReceiveData(std::string id, byte * data, size_t len){};
-        void OnClose(std::string id){};
+        void OnClose(std::string id);
         
         Description::Role mRole{Description::Role::ActPass};
 

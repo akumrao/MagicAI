@@ -173,6 +173,8 @@ namespace rtc
 	WebRtcTransport::~WebRtcTransport()
 	{
             SInfo << "~WebRtcTransport()";
+            
+            agent->close_timer();
               
             mutex.lock();
 

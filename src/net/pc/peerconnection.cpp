@@ -1530,12 +1530,15 @@ shared_ptr<IceTransport> PeerConnection::initIceTransport() {
 			    case IceTransport::State::Failed:
 				    changeIceState(IceState::Failed);
 				    changeState(State::Failed);
-				   // mProcessor.enqueue(&PeerConnection::remoteClose, shared_from_this());
+                                    
+                                   // remoteClose();
+				    mProcessor.enqueue(&PeerConnection::remoteClose, shared_from_this());
 				    break;
 			    case IceTransport::State::Disconnected:
 				    changeIceState(IceState::Disconnected);
 				    changeState(State::Disconnected);
-//				    mProcessor.enqueue(&PeerConnection::remoteClose, shared_from_this());
+                                   // remoteClose();
+				    mProcessor.enqueue(&PeerConnection::remoteClose, shared_from_this());
 				    break;
 			    default:
 				    // Ignore

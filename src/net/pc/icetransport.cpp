@@ -337,6 +337,18 @@ void IceTransport::incoming(message_ptr message) {
 }
 
 
+
+void IceTransport::OnClose(std::string id)
+{
+        
+    changeState(State::Disconnected);
+
+  //  OnDtlsTransportStatus(id, DtlsTransport::DtlsState::CLOSED);
+    
+   
+
+}
+
  void IceTransport::OnSctpTransportMessageReceived(std::string id, SctpTransport* sctpAssociation ,message_ptr message )
  {
      mSctpforwardmessagecallback(message);
