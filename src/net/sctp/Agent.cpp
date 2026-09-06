@@ -12,7 +12,7 @@
 using namespace base;
 
 
-
+//#define SDebug  STrace 
 
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
@@ -97,6 +97,7 @@ namespace stun {
 
         getInterfaces();
 
+        if(mConfig.publicIP)
         resolveStunServer(); // arvind if you wish to disable public ip comment this line
 
         return 0;

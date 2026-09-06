@@ -748,13 +748,46 @@ void PeerConnection::addRemoteCandidate(Candidate& candidate) {
 
 
 
+
+
+bool isLocalIPOnlyInDebug(const std::string& ip_str) {
+// Most compilers (GCC, Clang, MSVC) define _DEBUG or leave NDEBUG undefined in debug builds
+
+    struct in_addr addr;
+    if (inet_pton(AF_INET, ip_str.c_str(), &addr) != 1) {
+        return false; 
+    }
+
+    uint32_t ip = ntohl(addr.s_addr);
+    uint8_t o1 = (ip >> 24) & 0xFF;
+    uint8_t o2 = (ip >> 16) & 0xFF;
+
+    if (o1 == 10) return true;                           
+    if (o1 == 172 && (o2 >= 16 && o2 <= 31)) return true; 
+    if (o1 == 192 && o2 == 168) return true;             
+    if (o1 == 127) return true;                          
+    if (o1 == 169 && o2 == 254) return true;             
+
+    return false; // Public IP
+
+
+}
+
+
 void PeerConnection::processRemoteCandidate(Candidate& candidate) {
 
     Candidate *cand = nullptr;
 
     auto iceTransport = initIceTransport();
     
-    SInfo << "AgentNo " << iceTransport->agent.agentNo << " Adding remote candidate: " << string(candidate);
+   
+    
+    if( config.noPivateIP)
+       if(  isLocalIPOnlyInDebug(candidate.mNode))
+           return ;
+   
+     SInfo << "AgentNo " << iceTransport->agent.agentNo << " Adding remote candidate: " << string(candidate);
+           
     
 	{
 		// Set as remote candidate
