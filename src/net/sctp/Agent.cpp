@@ -2310,8 +2310,8 @@ namespace stun {
 
         if (remotedesp.ice_ufrag[0] != '\0') {
             // There is already a remote description
-            if (strcmp(remotedesp.ice_ufrag, remotedesp.ice_ufrag) == 0 &&
-                    strcmp(remotedesp.ice_pwd, remotedesp.ice_pwd) == 0) {
+            if (strcmp(remotedesp.ice_ufrag, remote.ice_ufrag) == 0 &&
+                    strcmp(remotedesp.ice_pwd, remote.ice_pwd) == 0) {
                 SDebug << "Remote description is already set, ignoring";
 
                 return -1;
@@ -2349,8 +2349,8 @@ namespace stun {
 
         SDebug << "AgentNo " << agentNo << " Adding " << (int) remotedesp.candidates_count << " candidates from remote description";
         for (int i = 0; i < remotedesp.candidates_count; ++i) {
-            Candidate *remote = &remotedesp.candidates[ i];
-            if (agent_add_candidate_pairs_for_remote(remote))
+            Candidate *remote_cand = &remotedesp.candidates[ i];
+            if (agent_add_candidate_pairs_for_remote(remote_cand))
                 LWarn("Failed to add candidate pair");
         }
 

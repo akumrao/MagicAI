@@ -98,7 +98,7 @@ struct RTC_CPP_EXPORT Configuration {
 	bool disableFingerprintVerification = false;
         
         bool publicIP{true};
-        bool noPivateIP{true};
+        bool noPivateIP{false};
 
 	// Port range
 	uint16_t portRangeBegin = 1024;
