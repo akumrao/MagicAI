@@ -2874,6 +2874,7 @@ namespace stun {
         if (bTimerActive) {
             _timer.Start(timeout_ms, 0);
         }
+	return 0;
     }
 
     void Agent::close_timer() {
