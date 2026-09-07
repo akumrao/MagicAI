@@ -731,7 +731,7 @@ shared_ptr<Client> createPeerConnection(Configuration &config, string id, bool i
                 SInfo << "Binary message from " << id
                     << " received, size=" << std::get<rtc::binary>(data).size() << std::endl;
 
-            sleep(1);
+            //sleep(1);
             dc->send("Send to web1");
            // dc->close();
         });
