@@ -88,7 +88,12 @@ namespace rtc {
         std::cout << "MbedTLS [Level " << level << "] (" << file << ":" << line << ") " << str;
     }
 
-    DtlsTransport::DtlsTransport(Listener *listener) : listener(listener) {
+    DtlsTransport::DtlsTransport(Listener *listener)
+        : listener(listener),
+         ssl_bio_(nullptr),
+         app_bio_(nullptr),
+         timer(nullptr)
+    {
         if (!config.mCertificate)
             throw std::invalid_argument("DTLS certificate is null");
 
@@ -313,6 +318,7 @@ namespace rtc {
     }
 
     void DtlsTransport::stay_uptodate() {
+        if (!app_bio_) return;
         size_t pending = TLS_BIO_ctrl_pending(app_bio_);
         if (pending > 0) {
             char *mybuf = static_cast<char *>(std::malloc(pending));
@@ -388,8 +394,8 @@ namespace rtc {
         mbedtls_ssl_free(&mSsl);
         mbedtls_ssl_config_free(&mConf);
 
-        if (ssl_bio_) TLS_BIO_free(ssl_bio_);
-        if (app_bio_) TLS_BIO_free(app_bio_);
+        if (ssl_bio_) { TLS_BIO_free(ssl_bio_); ssl_bio_ = nullptr; }
+        if (app_bio_) { TLS_BIO_free(app_bio_); app_bio_ = nullptr; }
         
         delete this->timer;
         this->timer = nullptr;
@@ -416,7 +422,7 @@ namespace rtc {
             //  ctx->close_notified = 1;
         }
 
-        stay_uptodate();
+        if (app_bio_) stay_uptodate();
 
         if (ret == 0) {
             SInfo << "Success: close_notify packet queued to libuv";
