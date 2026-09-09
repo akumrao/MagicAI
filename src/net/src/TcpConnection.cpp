@@ -214,7 +214,8 @@ namespace base {
                 
             }else
             {
-                SWarn << "onconnect failed ";
+                SWarn << "onconnect failed, local ip " <<    obj->GetLocalIp() << ":"<<  obj->GetLocalPort() << " PeerIP " << obj->GetPeerIp() << " " << obj->GetPeerPort();
+                
                 obj->Close();
             }
 

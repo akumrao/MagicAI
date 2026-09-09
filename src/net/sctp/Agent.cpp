@@ -1,4 +1,3 @@
-
 #include <string>
 #include "common.hpp"
 #include <Agent.h>
@@ -105,12 +104,8 @@ namespace stun {
     }
 
     bool Agent::getInterfaces() {
-
         int port = mConfig.portdefault;
 
-        //socket = new testUdpServer("::", port , this );
-        // socket = new testUdpServer("0.0.0.0", ++port , this );
-        // socket->start();
 
 
         socket = new WebRtcTransport(std::to_string(port), agentNo, mConfig, listener, "::", port, this);
@@ -368,7 +363,6 @@ namespace stun {
         //  memset(candidate, 0, sizeof (*candidate));
 
         candidate->mComponent = component;
-        //candidate->resolved = *record;
         candidate->mFoundation = "-";
 
         candidate->mPriority = ice_compute_priority(candidate->mType, candidate->resolved.addr.ss_family, candidate->mComponent, index);
@@ -776,27 +770,7 @@ namespace stun {
     void Agent::onTimer() {
 
         int64_t cur = current_timestamp();
-
-        // if( m_next_timestamp <=  cur )
-        {
-            agent_bookkeeping(cur);
-        }
-        //        else
-        //        {
-        //            SDebug << "onTimer";
-        //        }
-
-
-        //        if (expired())
-        //            // Attempt to re-allocate
-        //            sendAllocate();
-        //
-        //        else if (timeRemaining() < lifetime() * 0.33)
-        //            sendRefresh();
-        //
-        //        _observer.onTimer(*this);
-
-
+        agent_bookkeeping(cur);
     }
 
     bool Agent::is_stun_datagram(const void *data, size_t size) {
@@ -890,9 +864,6 @@ namespace stun {
 
             return 0;
         }
-
-
-
 
         agent_stun_entry_t *entry = agent_find_entry_from_record(src, relayed);
         if (!entry) {
@@ -1680,7 +1651,7 @@ namespace stun {
                     // candidate type preference of peer-reflexive candidates.
                     int family = entry->record.addr.ss_family;
                     int index = entry->pair && entry->pair->local
-                            ? (int) (entry->pair->local - localdesp.candidates) //arvind
+                            ? (int) (entry->pair->local - localdesp.candidates)
                             : 0;
 
                     Priority *priority = new stun::Priority();
@@ -1887,10 +1858,8 @@ namespace stun {
 
         switch (state) {
             case JUICE_STATE_DISCONNECTED:
-
                 break;
             case JUICE_STATE_CONNECTING:
-
                 break;
             case JUICE_STATE_CONNECTED:
                 break;
@@ -2040,7 +2009,7 @@ namespace stun {
                         // STUN binding requests sent for consent freshness also serve the keepalive purpose
                         // (i.e., to keep NAT bindings alive). Because of that, dedicated keepalives (e.g.,
                         // STUN Binding Indications) are not sent on candidate pairs where consent requests
-                        // are sent, in accordance with Section 20.2.3 of [RFC5245].
+                        // are sent, in accordance with Section 20.2.3 of [RFC5245].
                         ret = agent_send_stun_binding(entry, STUN_CLASS_REQUEST, 0, NULL, NULL);
 #endif
                         break;
@@ -2451,13 +2420,6 @@ namespace stun {
 
         //return agent_direct_send(agent, &selected_entry->record, data, size, ds);
     }
-
-
-
-
-
-
-
 
 #if AGENT_DEBUG
 
@@ -2896,7 +2858,5 @@ namespace stun {
 
 
 #endif
-
-
 
 } /* namespace stun */
