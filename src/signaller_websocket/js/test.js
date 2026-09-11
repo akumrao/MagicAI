@@ -115,6 +115,57 @@ function sendMessage(message) {
 }
 
 
+// Helper function to check if candidate contains a private IP address or local mDNS address
+function isPrivateIp(ip) {
+  const normalizedIp = ip.toLowerCase();
+
+  // Block .local mDNS hostnames
+  if (normalizedIp.endsWith('.local')) return true;
+
+  const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const match = ip.match(ipv4Pattern);
+
+  if (match) {
+    const octets = match.slice(1, 5).map(Number);
+    if (octets[0] === 127) return true; // Loopback
+    if (octets[0] === 10) return true; // Private
+    if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return true; // Private
+    if (octets[0] === 192 && octets[1] === 168) return true; // Private
+    if (octets[0] === 169 && octets[1] === 254) return true; // Link-local
+    if (octets[0] === 0) return true;
+    return false;
+  }
+
+  if (normalizedIp === '::1') return true; // Loopback
+  if (normalizedIp.startsWith('fc') || normalizedIp.startsWith('fd')) return true; // Unique Local
+  if (
+    normalizedIp.startsWith('fe8') ||
+    normalizedIp.startsWith('fe9') ||
+    normalizedIp.startsWith('fea') ||
+    normalizedIp.startsWith('feb')
+  ) {
+    return true; // Link-Local
+  }
+
+  return false;
+}
+
+function isPublicCandidate(candidateString) {
+  const parts = candidateString.split(' ');
+  if (parts.length < 5) return false;
+  const ip = parts[4];
+  return !isPrivateIp(ip);
+}
+
+
+
+// Read GUI state for Public IP candidates filter
+function isPublicOnlyFilterEnabled() {
+  const checkbox = document.querySelector('#publicOnlyFilter');
+  return checkbox ? checkbox.checked : false;
+}
+
+
 // This client receives a message router handler configuration
 registerSocketEvent('message', function(message) {
   console.log('Client received message:', message);
@@ -129,6 +180,16 @@ registerSocketEvent('message', function(message) {
   } else if (message.type === 'answer' && isStarted) {
     pc.setRemoteDescription(new RTCSessionDescription(message.desc));
   } else if (message.type === 'candidate' && isStarted) {
+
+    const candStr = message.candidate && message.candidate.candidate;
+
+
+
+    // Filter incoming remote candidate if Public-only filter is enabled
+    if (isPublicOnlyFilterEnabled() && candStr && !isPublicCandidate(candStr)) {
+      console.log('Filtered out private/non-public remote ICE candidate:', candStr);
+      return;
+    }
 
     var candidate = new RTCIceCandidate({
       sdpMLineIndex: message.candidate.sdpMLineIndex,
@@ -185,16 +246,26 @@ async function maybeStart() {
 
 function createPeerConnection() {
   try {
-      pc = new RTCPeerConnection(
-      {
-          iceServers         : [{'urls': 'stun:stun.l.google.com:19302'}],
-          iceTransportPolicy : 'all',
-          bundlePolicy       : 'max-bundle',
-          rtcpMuxPolicy      : 'require',
-          sdpSemantics       : 'unified-plan'
-      });
-
-
+    pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        // Add a TURN server using transport=tcp
+        {
+          urls: 'turn:openrelay.metered.ca:80?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
+      ],
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+      sdpSemantics: 'unified-plan'
+    });
 
     pc.ondatachannel = (event) => {
     // This is your 'receivedChannel'
@@ -260,7 +331,7 @@ function createPeerConnection() {
      channelSnd.onmessage = function(event)
      {
          console.log("onmessage event.data " + event.data);
-         channelSnd.send('Hi you!');
+         //channelSnd.send('Hi you!');
         // channelSnd.close();
      }
 
@@ -294,6 +365,16 @@ function createPeerConnection() {
 function handleIceCandidate(event) {
   console.log('icecandidate event: ', event);
   if (event.candidate) {
+    const candStr = event.candidate.candidate;
+
+
+
+    // Filter outgoing local candidate if Public-only filter is enabled
+    if (isPublicOnlyFilterEnabled() && candStr && !isPublicCandidate(candStr)) {
+      console.log('Filtered out private/non-public local ICE candidate:', candStr);
+      return;
+    }
+
     sendMessage({
       room: roomId,
       type: 'candidate',

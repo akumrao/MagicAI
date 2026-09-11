@@ -212,7 +212,10 @@ async function runSocketServer() {
                 }
 
                 else if (event === 'message') {
+
+
                     let message = data;
+                    console.log("Direct message %o", message);
                     message.from = socketContext.id;
                     const flowTag = socketContext.isclient ? '[CLIENT_TO_SERVER_FLOW]' : '[SERVER_TO_CLIENT_FLOW]';
 

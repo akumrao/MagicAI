@@ -17,6 +17,14 @@
       <video id="remoteVideo" autoplay></video>
     </div>
 
+    <!-- Candidate Filters GUI Controls -->
+    <div id="controls" style="margin: 15px 0;">
+
+      <label style="cursor: pointer; font-weight: bold;">
+        <input type="checkbox" id="publicOnlyFilter" /> Public IP Candidates Only
+      </label>
+    </div>
+
     <script src="js/lib/adapter.js"></script>
     <script src="js/test.js"></script>
 
@@ -24,8 +32,7 @@
 
     <button onclick="checkWebRtcRoles2()">Check WebRTC Roles2</button>
 
-     <button onclick="checkDtlsState()">Check Dtls State</button>
-
+    <button onclick="checkDtlsState()">Check Dtls State</button>
 
   </body>
 
